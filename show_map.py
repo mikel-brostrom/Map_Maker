@@ -87,6 +87,7 @@ class ShowMap(object):
                     np.math.floor(endPoints[x][0]) > 0 and np.math.floor(endPoints[x][1]) > 0:
                 self.__image.putpixel((np.math.floor(endPoints[x][0]), np.math.floor(endPoints[x][1])), 200)
 
+#
         # update the plot withe new image
         self.__ax.clear()
         self.__implot = self.__ax.imshow(self.__image)
