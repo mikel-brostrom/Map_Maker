@@ -54,7 +54,7 @@ class ShowMap(object):
         saveMap(self.__fig, self.mapName)
         self.start_time = time.time()
 
-    def updateMap(self, grid, maxvalue, robot_row, robot_col, endPoints):
+    def updateMap(self, grid, maxvalue, robot_row, robot_col, endPoints, orientation):
         """
         Creates a new BufferedImage from a grid with integer values between 0 - maxVal,
         where 0 is black and maxVal is white, with a grey scale in between. Negative values are shown as gray.
@@ -68,10 +68,6 @@ class ShowMap(object):
         """
         # convert grid to a numpy matrix
         grid = np.matrix(grid)
-
-
-
-
         # mapping the grid to an Image
         for col in range(0, self.__size[1]):
             for row in range(0, self.__size[0]):
@@ -101,6 +97,8 @@ class ShowMap(object):
 
         # plot the robot pose
         self.__ax.plot((robot_col), (robot_row), 'rs', markersize=self.__robot_size)
+        # plot the robot pose
+        self.__ax.plot((robot_col + 2 * np.cos(orientation)), (robot_row + 2 * np.sin(orientation)), 'bs', markersize=self.__robot_size)
 
         # draw new figure
         self.__fig.canvas.draw()

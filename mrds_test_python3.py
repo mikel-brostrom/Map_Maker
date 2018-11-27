@@ -164,10 +164,10 @@ if __name__ == '__main__':
 
 
             # Update the map
-            map.updateMap(grid, maxVal, robot_row, robot_col, endPoints)
+            map.updateMap(grid, maxVal, robot_row, robot_col, endPoints, orientation)
 
         #print('Waiting for a while...')
-        time.sleep(10)
+        time.sleep(20)
         print('Telling the robot to go in a circle.')
         response = postSpeed(0.9, 0.1)
     except UnexpectedResponse as ex:
