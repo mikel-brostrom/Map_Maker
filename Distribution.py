@@ -1,94 +1,63 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as st
+from Bayesian import Bayesian
 import math
 
-
-"""What do we have:
-    We take our prior states, use the laser readings and calculate the new ones
-    p is determined by the distance of the laser reading 
-    Each point have a probability"""
-data_coin_flips = np.random.randint(2, size=1000)
-
-params = np.linspace(0, 1, 100)
-p_x = [np.product(st.bernoulli.pmf(data_coin_flips, p)) for p in params]
-plt.scatter(params, p_x)
-print(p_x)
-print(params)
-#plt.axis([-min(params), min(params), -min(p_x), max(p_x)])
-#plt.show()
-
 grid_size = 10
-grid = np.array([[0.5 for col in range(grid_size)] for row in range(grid_size)])
-print(grid)
+prob_grid = np.array([[0.5 for col in range(grid_size)] for row in range(grid_size)])
+print(prob_grid)
+
+grid = 8
+grid = np.array([[0 for col in range(grid)] for row in range(grid)])
+line = grid[:][1]
+
+line_x = np.ones(8)*4
+line_x = line_x.astype(int)
+line_y = np.arange(8)
+bresenham_lines = list(zip(line_x, line_y))
+print(bresenham_lines)
+
+"""Vi antar att sensorn läser av relativt roboten"""
+shit = Bayesian(prob_grid)
+shit.bayes_handler(bresenham_lines)
+
+########
 
 
-class Bayesian():
 
-    #Region
-    def __init__(self, grid):
-        self.R = 30
-        self.grid = 0
-        self.beta = 0.5
-        self.accuracy = 0.01
-        """
-        self.R = 10 #Typ 30
-        self.grid = 0
-        self.beta = 15#math.radians(0.5)
-        self.accuracy = 0.01
-        """
+class RegionDivider:
+    def __init__(self, sensor_readings, cell):
+        self.sensor_readings = sensor_readings
 
-    def regions(self, alpha, r):
-
-        if r < (self.R - self.accuracy):
-            self.region = 2
-
-    # P(s|Empty)
-    def empty(self, r, alpha):
-        a = (self.R - r)/self.R
-        b = (self.beta - abs(alpha))/self.beta
-        return (a + b)/2
-
-    #P(s|Occupied)
-    def occupied(self, alpha, r):
-        return 1 - self.empty(alpha, r)
-
-    def bayes_rule(self, s, H):
-        # P(Occupied | s) = P(s|Occupied)*P(Occupied)/(P(s|Occupied)*P(Occupied) + P(s|!Occupied)*P(!Occupied))
-        # P(Occupied, s) = P(s,Occupied)*P(Occupied)/(P(s,Occupied)*P(Occupied) + P(s,!Occupied)*P(!Occupied))
-        PsH = P.conditioned(s, H) * P.probability(H)
-        PH =  P.probability(H)
-
-        return PsH*PH/(PsH*PH + (1-PsH)*(1-PH) )
-
-    def probability(self):
-        pass
-
-    def conditioned(self):
-        pass
-
-    def region_divider(self,cells):
+    def region_divider(self, cells):
         region = None
 
-        if d_cell > d_laser:
+        if cell_to_robot_dist > object_to_robot_dist:
             return None
 
         if d_laser > d_cell:
             region = 1
 
-        """
-        P = Bayesian(grid)
 
-        P.conditioned(laser_reading, occupied)
-        P.conditioned(laser_reading, empty)
-        P.probability(occupied)
-        P.probability(empty)
 
-        # P(s|H)P(H)
-        # P(H|s):
-        P.bayes_rule()
 
-        print("bayesian", P.empty(3.5, math.radians(0)))
-        print("bayesian", P.occupied(3.5, math.radians(0)))
-        print("Total prob", P.empty(3.5, math.radians(0)) + P.occupied(3.5, math.radians(0)))
-        """
+for row in range(grid_size):
+    for col in range(grid_size):
+        plt.scatter(row, col)
+        #grid[row][col]
+#plt.show()
+
+"""
+P.conditioned(laser_reading, occupied)
+P.conditioned(laser_reading, empty)
+P.probability(occupied)
+P.probability(empty)
+
+# P(s|H)P(H)
+# P(H|s):
+P.bayes_rule()
+
+print("bayesian", P.empty(3.5, math.radians(0)))
+print("bayesian", P.occupied(3.5, math.radians(0)))
+print("Total prob", P.empty(3.5, math.radians(0)) + P.occupied(3.5, math.radians(0)))
+"""
