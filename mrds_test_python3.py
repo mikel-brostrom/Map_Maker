@@ -33,6 +33,11 @@ class UnexpectedResponse(Exception):
     pass
 
 
+def calculate_distance(x1,y1,x2,y2):
+    return (abs(x1-x2)**2+abs(y1-y2)**2)**0.5
+
+
+
 if __name__ == '__main__':
 
     showGUI = True  # set this to False if you run in putty
@@ -95,7 +100,7 @@ if __name__ == '__main__':
 
     try:
         print('Telling the robot to go straight ahead.')
-        response = postSpeed(0.1, 0.1)
+        response = postSpeed(0.3, 0.1)
 
         while(1):
             #
@@ -136,7 +141,7 @@ if __name__ == '__main__':
                 # Calculate its line by Bresenham's algorithm
                 bresenhamLine=list(bresenham(robot_row, robot_col, endPoints[x][0], endPoints[x][1]))
                 #print(bresenhamLine)
-                print("\n")
+                #print("\n")
 
                 # Append it to the Bresenham's lines list
                 bresenhamLines.append(bresenhamLine)
@@ -144,6 +149,9 @@ if __name__ == '__main__':
 
             for i in range(0, len(bresenhamLines)):
                 # Traverse its elements
+                dist = calculate_distance(bresenhamLines[i][len(bresenhamLines[i]) - 1][0],
+                                          bresenhamLines[i][len(bresenhamLines[i]) - 1][1], robot_row, robot_col)
+
                 for j in range(0, len(bresenhamLines[i])):
                     # Set their grid value to visited
                     if math.floor(bresenhamLines[i][j][0]) < nRows and bresenhamLines[i][j][1] < nCols and\
@@ -158,16 +166,20 @@ if __name__ == '__main__':
                     # Bottom line
                     elif math.floor(bresenhamLines[i][j][1]) == 0 and bresenhamLines[i][j][0] > 0 and bresenhamLines[i][j][0] < nCols:
                         grid[math.floor(bresenhamLines[i][j][0])][math.floor(bresenhamLines[i][j][1])] = 15
-                    # Left line
+                    # Right line
                     elif math.floor(bresenhamLines[i][j][0]) == 0 and bresenhamLines[i][j][1] > 0 and bresenhamLines[i][j][1] < nCols:
                         grid[math.floor(bresenhamLines[i][j][0])][math.floor(bresenhamLines[i][j][1])] = 15
 
+                    if math.floor(bresenhamLines[i][len(bresenhamLines[i])]) - 1][0]) < nRows and math.floor(bresenhamLines[i][len(bresenhamLines[i]) - 1][0]) < nCols and \
+                            math.floor(bresenhamLines[i][len(bresenhamLines[i])]) > 0 and math.floor(bresenhamLines[i][len(bresenhamLines[i])]) > 0:
+                        grid[math.floor(bresenhamLines[i][len(bresenhamLines[i]) - 1][0])][math.floor(bresenhamLines[i][len(bresenhamLines[i]) - 1][1])] = 15
 
             # Update the map
             map.updateMap(grid, maxVal, robot_row, robot_col, endPoints, orientation)
+           # time.sleep(50000)
 
         #print('Waiting for a while...')
-        time.sleep(20)
+        time.sleep(500)
         print('Telling the robot to go in a circle.')
         response = postSpeed(0.9, 0.1)
     except UnexpectedResponse as ex:
@@ -203,3 +215,4 @@ if __name__ == '__main__':
         print("I'm done here!")
     except UnexpectedResponse as ex:
         print('Unexpected response from server when reading position:', ex)
+

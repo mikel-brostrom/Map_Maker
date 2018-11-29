@@ -82,12 +82,11 @@ class ShowMap(object):
                     self.__image.putpixel((col, row), abs(value * 255 / maxvalue - 255))
 
         for x in range(0, len(endPoints)):
-            # Calculate its line by Bresenham's algorithm
             if np.math.floor(endPoints[x][0]) < 60 and np.math.floor(endPoints[x][1]) < 65 and \
                     np.math.floor(endPoints[x][0]) > 0 and np.math.floor(endPoints[x][1]) > 0:
-                self.__image.putpixel((np.math.floor(endPoints[x][0]), np.math.floor(endPoints[x][1])), 200)
+                #np.rot90()
+                self.__image.putpixel((np.math.floor(endPoints[x][1]), np.math.floor(endPoints[x][0])), 200)
 
-#
         # update the plot withe new image
         self.__ax.clear()
         self.__implot = self.__ax.imshow(self.__image)
@@ -99,7 +98,7 @@ class ShowMap(object):
         # plot the robot pose
         self.__ax.plot((robot_col), (robot_row), 'rs', markersize=self.__robot_size)
         # plot the robot pose
-        self.__ax.plot((robot_col + 2 * np.cos(orientation)), (robot_row + 2 * np.sin(orientation)), 'bs', markersize=self.__robot_size)
+        self.__ax.plot((robot_col  +2 * np.cos(-orientation)), (robot_row + 2 * np.sin(-orientation)), 'bs', markersize=self.__robot_size)
 
         # draw new figure
         self.__fig.canvas.draw()

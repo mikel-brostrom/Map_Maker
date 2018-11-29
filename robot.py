@@ -2,6 +2,7 @@ import http.client, json
 from math import pi
 import matplotlib.pyplot as plt
 import math
+import numpy as np
 
 url = 'http://localhost:50000'
 # HTTPConnection does not want to have http:// in the address apparently, so lest's remove it:
@@ -156,6 +157,7 @@ def laserValuesToCoordinates(robot_coord, laser, laser_angles,orientation):
     result = zip(coords[0], coords[1])
     # Converting itertor to set
     resultSet = list(result)
+
 
     #print(coords[0])
     #print(coords[1])
