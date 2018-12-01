@@ -1,9 +1,10 @@
-from  PIL import Image
-import time
 import threading
-import numpy as np
+import time
 
-from robot import getPose
+import numpy as np
+from  PIL import Image
+
+from reactiveLayer.sensing.robotMovement import getPose
 
 """
 ShowMap creates a Gui for showing the progress of the created map and saves it to file every 5 second
@@ -54,7 +55,7 @@ class ShowMap(object):
         saveMap(self.__fig, self.mapName)
         self.start_time = time.time()
 
-    def updateMap(self, grid, maxvalue, robot_row, robot_col, endPoints, orientation):
+    def updateMap(self, grid, maxvalue, robot_row, robot_col, orientation):
         """
         Creates a new BufferedImage from a grid with integer values between 0 - maxVal,
         where 0 is black and maxVal is white, with a grey scale in between. Negative values are shown as gray.
@@ -81,12 +82,6 @@ class ShowMap(object):
                     # set pixel value
                     self.__image.putpixel((col, row), abs(value * 255 / maxvalue - 255))
 
-        for x in range(0, len(endPoints)):
-            if np.math.floor(endPoints[x][0]) < 60 and np.math.floor(endPoints[x][1]) < 65 and \
-                    np.math.floor(endPoints[x][0]) > 0 and np.math.floor(endPoints[x][1]) > 0:
-                #np.rot90()
-                self.__image.putpixel((np.math.floor(endPoints[x][1]), np.math.floor(endPoints[x][0])), 200)
-
         # update the plot withe new image
         self.__ax.clear()
         self.__implot = self.__ax.imshow(self.__image)
@@ -98,7 +93,7 @@ class ShowMap(object):
         # plot the robot pose
         self.__ax.plot((robot_col), (robot_row), 'rs', markersize=self.__robot_size)
         # plot the robot pose
-        self.__ax.plot((robot_col  +2 * np.cos(-orientation)), (robot_row + 2 * np.sin(-orientation)), 'bs', markersize=self.__robot_size)
+        self.__ax.plot((robot_col  +3 * np.sin(orientation)), (robot_row + 3 * np.cos(orientation)), 'bs', markersize=self.__robot_size)
 
         # draw new figure
         self.__fig.canvas.draw()
@@ -128,80 +123,6 @@ def saveMap(fig, mapname):
     img = Image.fromarray(data)
     img.convert('RGB').save(mapname, 'PNG')
 
-
-def createmap():
-    """"A simple example of how to use the ShowMap class """
-    showGUI = True  # set this to False if you run in putty
-    # use the same no. of rows and cols in map and grid:
-    nRows = 60
-    nCols = 65
-
-    # Initialize a ShowMap object. Do this only once!!
-    map = ShowMap(nRows, nCols, showGUI)
-    # create a grid with all cells set to 7 (unexplored) as numpy matrix:
-    grid = np.ones(shape=(nRows, nCols)) * 7
-    # or as a two-dimensional array:
-    # grid = [[7 for col in range(nCols)] for row in range(nRows)]
-
-    # create some obstacles (black/grey)
-    # Upper left side:
-    grid[0][0] = 15
-    grid[0][1] = 15
-    grid[0][2] = 15
-    grid[0][3] = 15
-    grid[0][4] = 15
-    grid[0][5] = 15
-    grid[0][6] = 15
-    grid[0][7] = 15
-
-    # Lower right side:
-    grid[59][64] = 15
-    grid[58][64] = 15
-    grid[57][64] = 15
-    grid[56][64] = 15
-    grid[55][64] = 15
-
-    # Lower left side:
-    grid[59][0] = 12
-    grid[59][1] = 11
-    grid[59][2] = 10
-    grid[59][3] = 9
-    grid[59][4] = 8
-
-    # An explored area (white)
-    for rw in range(35, 50):
-        for cl in range(32, 55):
-            grid[rw][cl] = 0
-
-    # Max grid value
-    maxVal = 15
-
-    # Hard coded values for max/min x,y
-    min_x = -15
-    max_y = 17
-    cell_size = 0.5
-
-    # Position of the robot in the grid (red dot)
-    pose = getPose()
-    curr_pos = pose['Pose']['Position']
-    robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], min_x, max_y, cell_size)
-    robot_row = robot_coord[0]
-    robot_col = robot_coord[1]
-
-    # Update the map
-    map.updateMap(grid, maxVal, robot_row, robot_col)
-    print("Map updated")
-
-    time.sleep(2)
-    # Let's update the map again. You should update the grid and the position
-    # In your solution you should not sleep of course, but update continuously
-    pose = getPose()
-    curr_pos = pose['Pose']['Position']
-    robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], min_x, max_y, cell_size)
-    robot_row = robot_coord[0]
-    robot_col = robot_coord[1]
-    map.updateMap(grid, maxVal, robot_row, robot_col)
-    print("Map updated again")
 
 def pos_to_grid(x, y, xmin, ymax, cellsize):
     """

@@ -12,16 +12,12 @@ Updated by Ola Ringdahl 2017-10-18 (added example code that use showMap)
 Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with http://
     without getting a socket error. Added a function for converting (x,y) to (row,col))
 """
-import numpy as np
 
-from robot import postSpeed, getLaser, getLaserAngles, getPose, getHeading, laserValuesToCoordinates, \
-    bresenham,getOrientation
-from show_map import createmap, ShowMap, pos_to_grid
-from math import pi
-import math
 import time
-from math import log
-import matplotlib.pyplot as plt
+
+from deliberativeLayer.cartographer.show_map import *
+from reactiveLayer.sensing.robotMovement import *
+from reactiveLayer.sensing.robotSensing import *
 
 url = 'http://localhost:50000'
 # HTTPConnection does not want to have http:// in the address apparently, so lest's remove it:
@@ -42,77 +38,52 @@ if __name__ == '__main__':
 
     showGUI = True  # set this to False if you run in putty
     # use the same no. of rows and cols in map and grid:
-    nRows = 60
-    nCols = 65
+    nRows = 200
+    nCols = 300
     # Initialize a ShowMap object. Do this only once!!
     map = ShowMap(nRows, nCols, showGUI)
-    # create a grid with all cells set to 7 (unexplored) as numpy matrix:
-    grid = np.ones(shape=(nRows, nCols)) * 7
+    # create an occupancy grid with all cells set to 7 (unexplored) as
+    # numpy matrix:
+    occupancy_grid = np.ones(shape=(nRows, nCols)) * 7
+    # create a probability grid with all cells set to 0.5 (same probability of being exampled
+    # as unexplored) as numpy matrix:
+    probability_grid = np.ones(shape=(nRows, nCols)) * 0.5
     # or as a two-dimensional array:
     # grid = [[7 for col in range(nCols)] for row in range(nRows)]
     # create some obstacles (black/grey)
     # Upper left side:
-    grid[0][0] = 15
-    grid[0][1] = 15
-    grid[0][2] = 15
-    grid[0][3] = 15
-    grid[0][4] = 15
-    grid[0][5] = 15
-    grid[0][6] = 15
-    grid[0][7] = 15
-
-    # Lower right side:
-    grid[59][64] = 15
-    grid[58][64] = 15
-    grid[57][64] = 15
-    grid[56][64] = 15
-    grid[55][64] = 15
-
-    # Lower left side:
-    grid[59][0] = 12
-    grid[59][1] = 11
-    grid[59][2] = 10
-    grid[59][3] = 9
-    grid[59][4] = 8
 
     # An explored area (white)
     for rw in range(35, 50):
         for cl in range(32, 55):
-            grid[rw][cl] = 7
+            occupancy_grid[rw][cl] = 7
+
 
     # Max grid value
     maxVal = 15
 
     # Hard coded values for max/min x,y
     min_x = -15
-    max_y = 17
-    cell_size = 1
-
-    # Position of the robot in the grid (red dot)
-    pose = getPose()
-    curr_pos = pose['Pose']['Position']
-    robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], min_x, max_y, cell_size)
-    robot_row = robot_coord[0]
-    robot_col = robot_coord[1]
+    max_y = 15
+    cell_size = 0.1
 
     print('Sending commands to MRDS server', MRDS_URL)
+    print('Fuck maps\n')
 
 
     try:
         print('Telling the robot to go straight ahead.')
-        response = postSpeed(0.3, 0.1)
+        response = postSpeed(0.1, 0.3)
 
         while(1):
-            #
-            # print("while")
-            time.sleep(0.05)
 
-            laser = getLaser()
-            laserAngles = getLaserAngles()
+            # Get all the laser readout values starting from
+            # the one with angle 0 to 270 (in meters)
+            laser_scan_values = get_laser_scan()
+            # Get all the laser angles starting from 0 to 270
+            laser_angles = get_laser_angles()
 
-
-            # Let's update the map again. You should update the grid and the position
-            # In your solution you should not sleep of course, but update continuously
+            # Converts the car's (x, y) position to (row, col) coordinate in the grid
             pose = getPose()
             curr_pos = pose['Pose']['Position']
             robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], min_x, max_y, cell_size)
@@ -122,97 +93,58 @@ if __name__ == '__main__':
             # Retrieve the angles needed to calculate
             orientation=getOrientation();
 
-            #Calculate the coordinates laser point readings
-            endPoints = laserValuesToCoordinates(robot_coord,laser['Echoes'], laserAngles,orientation)
+            # Calculate the coordinates laser point readings
+            sensor_readout_coordinates = get_sensor_readout_coordinates(robot_coord, laser_scan_values['Echoes'], laser_angles, orientation)
 
-            #for x in range(0, len(endPoints)):
+            # Get all the Bresenham lines
+            bresenham_lines = get_bresenham_lines(robot_coord, sensor_readout_coordinates)
 
-            #print(endPoints[0][0])
-            #print(endPoints[0][1])
+            for bresenham_line in bresenham_lines:
+                dist = calculate_distance(bresenham_line[-1][0],bresenham_line[-1][1],robot_row,robot_col)
+                #                          bresenham_lines[len(bresenham_lines) - 1][1],robot_row,robot_col)
+                #print(dist)
+                for coordinate in bresenham_line:
+                    if math.floor(coordinate[0]) < nRows and math.floor(coordinate[1]) < nCols and \
+                       math.floor(coordinate[0]) > 0 and math.floor(coordinate[1]) > 0:
+                        occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
+                    if(dist<30):
+                        occupancy_grid[math.floor(bresenham_line[-1][0])][math.floor(bresenham_line[-1][1])] = 15
 
-
-                #print(x)# OK!, goes from 0 - 270
-
-
-            bresenhamLines = []
-
-            # For each laser beam
-            for x in range(0,len(endPoints)):
-                # Calculate its line by Bresenham's algorithm
-                bresenhamLine=list(bresenham(robot_row, robot_col, endPoints[x][0], endPoints[x][1]))
-                #print(bresenhamLine)
-                #print("\n")
-
-                # Append it to the Bresenham's lines list
-                bresenhamLines.append(bresenhamLine)
-                # For each line
-
-            for i in range(0, len(bresenhamLines)):
+            #for x in bresenham_lines:
+            #for i in range(0, len(bresenham_lines)):
                 # Traverse its elements
-                dist = calculate_distance(bresenhamLines[i][len(bresenhamLines[i]) - 1][0],
-                                          bresenhamLines[i][len(bresenhamLines[i]) - 1][1], robot_row, robot_col)
+                #dist = calculate_distance(bresenham_lines[len(bresenham_lines) - 1][0],
+                #                          bresenham_lines[len(bresenham_lines) - 1][1],robot_row,robot_col)
 
-                for j in range(0, len(bresenhamLines[i])):
+            #    for j in range(0, len(bresenham_lines[i])):
                     # Set their grid value to visited
-                    if math.floor(bresenhamLines[i][j][0]) < nRows and bresenhamLines[i][j][1] < nCols and\
-                                    math.floor(bresenhamLines[i][j][0]) > 0 and math.floor(bresenhamLines[i][j][1]) > 0:
-                        grid[math.floor(bresenhamLines[i][j][0])][math.floor(bresenhamLines[i][j][1])] = 0
+            #        if math.floor(bresenham_lines[i][j][0]) < nRows and bresenham_lines[i][j][1] < nCols and\
+            #                        math.floor(bresenham_lines[i][j][0]) > 0 and math.floor(bresenham_lines[i][j][1]) > 0:
+            #            occupancy_grid[math.floor(bresenham_lines[i][j][0])][math.floor(bresenham_lines[i][j][1])] = 0
                     # Top line
-                    elif math.floor(bresenhamLines[i][j][0]) == 0 and bresenhamLines[i][j][1] > 0 and bresenhamLines[i][j][1] < nRows :
-                        grid[math.floor(bresenhamLines[i][j][0])][math.floor(bresenhamLines[i][j][1])] = 15
+                #    elif math.floor(bresenham_lines[i][j][0]) == 0 and bresenham_lines[i][j][1] > 0 and bresenham_lines[i][j][1] < nRows :
+                #        occupancy_grid[math.floor(bresenham_lines[i][j][0])][math.floor(bresenham_lines[i][j][1])] = 15
                     # Left line
-                    elif math.floor(bresenhamLines[i][j][1]) == 0 and bresenhamLines[i][j][0] > 0 and bresenhamLines[i][j][0] < nRows :
-                        grid[math.floor(bresenhamLines[i][j][0])][math.floor(bresenhamLines[i][j][1])] = 15
+                #    elif math.floor(bresenham_lines[i][j][1]) == 0 and bresenham_lines[i][j][0] > 0 and bresenham_lines[i][j][0] < nRows :
+                #        occupancy_grid[math.floor(bresenham_lines[i][j][0])][math.floor(bresenham_lines[i][j][1])] = 15
                     # Bottom line
-                    elif math.floor(bresenhamLines[i][j][1]) == 0 and bresenhamLines[i][j][0] > 0 and bresenhamLines[i][j][0] < nCols:
-                        grid[math.floor(bresenhamLines[i][j][0])][math.floor(bresenhamLines[i][j][1])] = 15
+                #    elif math.floor(bresenham_lines[i][j][1]) == 0 and bresenham_lines[i][j][0] > 0 and bresenham_lines[i][j][0] < nCols:
+                #        occupancy_grid[math.floor(bresenham_lines[i][j][0])][math.floor(bresenham_lines[i][j][1])] = 15
                     # Right line
-                    elif math.floor(bresenhamLines[i][j][0]) == 0 and bresenhamLines[i][j][1] > 0 and bresenhamLines[i][j][1] < nCols:
-                        grid[math.floor(bresenhamLines[i][j][0])][math.floor(bresenhamLines[i][j][1])] = 15
+                #    elif math.floor(bresenham_lines[i][j][0]) == 0 and bresenham_lines[i][j][1] > 0 and bresenham_lines[i][j][1] < nCols:
+                #        occupancy_grid[math.floor(bresenham_lines[i][j][0])][math.floor(bresenham_lines[i][j][1])] = 15
 
-                    if math.floor(bresenhamLines[i][len(bresenhamLines[i])]) - 1][0]) < nRows and math.floor(bresenhamLines[i][len(bresenhamLines[i]) - 1][0]) < nCols and \
-                            math.floor(bresenhamLines[i][len(bresenhamLines[i])]) > 0 and math.floor(bresenhamLines[i][len(bresenhamLines[i])]) > 0:
-                        grid[math.floor(bresenhamLines[i][len(bresenhamLines[i]) - 1][0])][math.floor(bresenhamLines[i][len(bresenhamLines[i]) - 1][1])] = 15
+                    #if math.floor(bresenhamLines[i][len(bresenhamLines[i])]) - 1][0]) < nRows and math.floor(bresenhamLines[i][len(bresenhamLines[i]) - 1][0]) < nCols and \
+                    #        math.floor(bresenhamLines[i][len(bresenhamLines[i])]) > 0 and math.floor(bresenhamLines[i][len(bresenhamLines[i])]) > 0:
+                    #if math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][0]) < nRows and \
+                    #    math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][1]) < nCols and \
+                    #     math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][0]) > 0 and \
+                    #      math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][1]) > 0:
+                    #    occupancy_grid[math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][0])][math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][1])] = 15
 
             # Update the map
-            map.updateMap(grid, maxVal, robot_row, robot_col, endPoints, orientation)
-           # time.sleep(50000)
+            map.updateMap(occupancy_grid, maxVal, robot_row, robot_col, orientation)
 
-        #print('Waiting for a while...')
-        time.sleep(500)
-        print('Telling the robot to go in a circle.')
-        response = postSpeed(0.9, 0.1)
     except UnexpectedResponse as ex:
         print('Unexpected response from server when sending speed commands:', ex)
-
-    try:
-        laser = getLaser()
-        laserAngles = getLaserAngles()
-        print(
-            'The rightmost laser beam has angle %.3f deg from x-axis (straight forward) and distance %.3f '
-            'meters.createMap' % (
-                laserAngles[0], laser['Echoes'][0]
-            ))
-
-        print('Beam 1: %.3f Beam 269: %.3f Beam 270: %.3f' % (
-            laserAngles[0] * 180 / pi, laserAngles[269] * 180 / pi, laserAngles[270] * 180 / pi))
-    except UnexpectedResponse as ex:
-        print('Unexpected response from server when reading laser data:', ex)
-
-    try:
-        pose = getPose()
-        print('Current position: ', pose['Pose']['Position'])
-        print('------- Laser values ------')
-        for t in range(10):
-            print('Current heading vector: X:{X:.3}, Y:{Y:.3}'.format(**getHeading()))
-            laser = getLaser()
-            print('Distance %.3f meters.' % (laser['Echoes'][135]))
-            if laser['Echoes'][135] < 0.3:
-                print('Danger! Brace for impact! Hit the brakes!')
-                response = postSpeed(0, -0.1)
-            time.sleep(1)
-        postSpeed(0, 0)
-        print("I'm done here!")
-    except UnexpectedResponse as ex:
-        print('Unexpected response from server when reading position:', ex)
 
