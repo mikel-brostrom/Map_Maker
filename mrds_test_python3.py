@@ -16,6 +16,7 @@ Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with
 import time
 
 from deliberativeLayer.cartographer.show_map import *
+from deliberativeLayer.frontierBasedExploration.frontierCalculator import*
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
 
@@ -70,18 +71,20 @@ if __name__ == '__main__':
     print('Sending commands to MRDS server', MRDS_URL)
     print('Fuck maps\n')
 
+    robot_sensing = robotSensing()
+    frontier_calculator = frontierCalculator()
 
     try:
         print('Telling the robot to go straight ahead.')
-        response = postSpeed(0.1, 0.3)
+        response = postSpeed(1, -1)
 
         while(1):
 
             # Get all the laser readout values starting from
             # the one with angle 0 to 270 (in meters)
-            laser_scan_values = get_laser_scan()
+            laser_scan_values = robot_sensing.get_laser_scan()
             # Get all the laser angles starting from 0 to 270
-            laser_angles = get_laser_angles()
+            laser_angles = robot_sensing.get_laser_angles()
 
             # Converts the car's (x, y) position to (row, col) coordinate in the grid
             pose = getPose()
@@ -89,17 +92,20 @@ if __name__ == '__main__':
             robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], min_x, max_y, cell_size)
             robot_row = robot_coord[0]
             robot_col = robot_coord[1]
+            #print('Im at coordinate', robot_coord) # These are floats! Not integers!
 
             # Retrieve the angles needed to calculate
             orientation=getOrientation();
 
             # Calculate the coordinates laser point readings
-            sensor_readout_coordinates = get_sensor_readout_coordinates(robot_coord, laser_scan_values['Echoes'], laser_angles, orientation)
+            sensor_readout_coordinates = robot_sensing.get_sensor_readout_coordinates(robot_coord,\
+                laser_scan_values['Echoes'], laser_angles, orientation)
 
             # Get all the Bresenham lines
-            bresenham_lines = get_bresenham_lines(robot_coord, sensor_readout_coordinates)
+            bresenham_lines = robot_sensing.get_bresenham_lines(robot_coord, sensor_readout_coordinates)
 
             for bresenham_line in bresenham_lines:
+                # Calculate the distance from the robot coordinate to the end point of each Bresenham line
                 dist = calculate_distance(bresenham_line[-1][0],bresenham_line[-1][1],robot_row,robot_col)
                 #                          bresenham_lines[len(bresenham_lines) - 1][1],robot_row,robot_col)
                 #print(dist)
@@ -107,8 +113,10 @@ if __name__ == '__main__':
                     if math.floor(coordinate[0]) < nRows and math.floor(coordinate[1]) < nCols and \
                        math.floor(coordinate[0]) > 0 and math.floor(coordinate[1]) > 0:
                         occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
-                    if(dist<30):
-                        occupancy_grid[math.floor(bresenham_line[-1][0])][math.floor(bresenham_line[-1][1])] = 15
+
+
+                    #if(dist<30):
+                    #    occupancy_grid[math.floor(bresenham_line[-1][0])][math.floor(bresenham_line[-1][1])] = 15
 
             #for x in bresenham_lines:
             #for i in range(0, len(bresenham_lines)):
@@ -143,6 +151,9 @@ if __name__ == '__main__':
                     #    occupancy_grid[math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][0])][math.floor(bresenham_lines[i][len(bresenham_lines[i]) - 1][1])] = 15
 
             # Update the map
+
+            frontier_calculator.find_frontiers(occupancy_grid, robot_coord)
+
             map.updateMap(occupancy_grid, maxVal, robot_row, robot_col, orientation)
 
     except UnexpectedResponse as ex:
