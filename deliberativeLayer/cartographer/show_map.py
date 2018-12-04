@@ -93,7 +93,7 @@ class ShowMap(object):
         # plot the robot pose
         self.__ax.plot((robot_col), (robot_row), 'rs', markersize=self.__robot_size)
         # plot the robot pose
-        self.__ax.plot((robot_col  +3 * np.sin(orientation)), (robot_row + 3 * np.cos(orientation)), 'bs', markersize=self.__robot_size)
+        self.__ax.plot((robot_col + 3 * np.sin(orientation + np.math.pi/2)), (robot_row + 3 * np.cos(orientation+ np.math.pi/2)), 'bs', markersize=self.__robot_size)
 
         # draw new figure
         self.__fig.canvas.draw()

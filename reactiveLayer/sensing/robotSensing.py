@@ -63,8 +63,8 @@ class robotSensing:
         coord_y = [0]*len(laser)
 
         for x in range(0,len(laser_angles)):
-            coord_x[x] = robot_coord[0]+math.cos(laser_angles[x]+orientation)*laser[x]
-            coord_y[x] = robot_coord[1]+math.sin(laser_angles[x]+orientation)*laser[x]
+            coord_x[x] = robot_coord[0]+math.cos(laser_angles[x]+math.pi/2)*laser[x]
+            coord_y[x] = robot_coord[1]+math.sin(laser_angles[x]+math.pi/2)*laser[x]
 
         result = zip(coord_x, coord_y)
         # Converting iterator to set

@@ -15,8 +15,9 @@ Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with
 
 import time
 
+from deliberativeLayer.cartographer.map_info import Cspace
 from deliberativeLayer.cartographer.show_map import *
-from deliberativeLayer.frontierBasedExploration.frontierCalculator import*
+from deliberativeLayer.frontierBasedExploration.frontierCalculator import *
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
 
@@ -39,10 +40,10 @@ if __name__ == '__main__':
 
     showGUI = True  # set this to False if you run in putty
     # use the same no. of rows and cols in map and grid:
-    nRows = 200
-    nCols = 300
+    nRows = 100
+    nCols = 65
     # Initialize a ShowMap object. Do this only once!!
-    map = ShowMap(nRows, nCols, showGUI)
+
     # create an occupancy grid with all cells set to 7 (unexplored) as
     # numpy matrix:
     occupancy_grid = np.ones(shape=(nRows, nCols)) * 7
@@ -54,10 +55,7 @@ if __name__ == '__main__':
     # create some obstacles (black/grey)
     # Upper left side:
 
-    # An explored area (white)
-    for rw in range(35, 50):
-        for cl in range(32, 55):
-            occupancy_grid[rw][cl] = 7
+
 
 
     # Max grid value
@@ -66,30 +64,42 @@ if __name__ == '__main__':
     # Hard coded values for max/min x,y
     min_x = -15
     max_y = 15
-    cell_size = 0.1
+    cell_size = 1
 
     print('Sending commands to MRDS server', MRDS_URL)
     print('Fuck maps\n')
 
+    c_space = Cspace(-15, -15, 40, 40, cell_size)
+    map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
     robot_sensing = robotSensing()
     frontier_calculator = frontierCalculator()
 
+    # An explored area (white)
+    for rw in range(15, c_space.grid_nr_rows):
+        for cl in range(15, c_space.grid_nr_columns):
+            c_space.occupancy_grid[rw][cl] = 7
+
+
     try:
         print('Telling the robot to go straight ahead.')
-        response = postSpeed(1, -1)
+        #response = postSpeed(1, 0)
+        #time.sleep(1)
+        response = postSpeed(0, 0.1)
 
         while(1):
+            #print('in while!')
 
             # Get all the laser readout values starting from
             # the one with angle 0 to 270 (in meters)
             laser_scan_values = robot_sensing.get_laser_scan()
+            #print(laser_scan_values)
             # Get all the laser angles starting from 0 to 270
             laser_angles = robot_sensing.get_laser_angles()
 
             # Converts the car's (x, y) position to (row, col) coordinate in the grid
             pose = getPose()
             curr_pos = pose['Pose']['Position']
-            robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], min_x, max_y, cell_size)
+            robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
             robot_row = robot_coord[0]
             robot_col = robot_coord[1]
             #print('Im at coordinate', robot_coord) # These are floats! Not integers!
@@ -106,14 +116,21 @@ if __name__ == '__main__':
 
             for bresenham_line in bresenham_lines:
                 # Calculate the distance from the robot coordinate to the end point of each Bresenham line
-                dist = calculate_distance(bresenham_line[-1][0],bresenham_line[-1][1],robot_row,robot_col)
+                #dist = calculate_distance(bresenham_line[-1][0],bresenham_line[-1][1],robot_row,robot_col)
                 #                          bresenham_lines[len(bresenham_lines) - 1][1],robot_row,robot_col)
                 #print(dist)
                 for coordinate in bresenham_line:
-                    if math.floor(coordinate[0]) < nRows and math.floor(coordinate[1]) < nCols and \
+                    if math.floor(coordinate[0]) < c_space.grid_nr_rows and math.floor(coordinate[1]) < c_space.grid_nr_columns and \
                        math.floor(coordinate[0]) > 0 and math.floor(coordinate[1]) > 0:
-                        occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
-
+                        c_space.occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
+                    # Top line
+                    #elif math.floor(coordinate[0]) == 0 and math.floor(coordinate[1]) > 0 and math.floor(coordinate[1]) < nRows :
+                    #    occupancy_grid[math.floor(math.floor(coordinate[0]))][math.floor(math.floor(coordinate[1]))] = 15
+                    # Left line
+                    #elif math.floor(coordinate[1]) == 0 and coordinate[0] > 0 and coordinate[0] < nCols:
+                    #        occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 15
+                    #elif math.floor(coordinate[0]) == 0 and coordinate[1] > 0 and coordinate[1] < nCols:
+                    #        occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 15
 
                     #if(dist<30):
                     #    occupancy_grid[math.floor(bresenham_line[-1][0])][math.floor(bresenham_line[-1][1])] = 15
@@ -152,9 +169,9 @@ if __name__ == '__main__':
 
             # Update the map
 
-            frontier_calculator.find_frontiers(occupancy_grid, robot_coord)
+           #frontier_calculator.find_frontiers(occupancy_grid, robot_coord)
 
-            map.updateMap(occupancy_grid, maxVal, robot_row, robot_col, orientation)
+            map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation)
 
     except UnexpectedResponse as ex:
         print('Unexpected response from server when sending speed commands:', ex)
