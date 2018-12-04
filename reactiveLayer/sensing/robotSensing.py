@@ -54,7 +54,7 @@ class robotSensing:
         else:
             raise UnexpectedResponse(response)
 
-    def get_sensor_readout_coordinates(self,robot_coord, laser, laser_angles, orientation):
+    def get_sensor_readout_coordinates(self,robot_coord, laser, laser_angles,scale):
         """
         Requests the current laser properties from
         the MRDS server and parses it into a dict
