@@ -15,6 +15,7 @@ Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with
 
 import time
 
+from bayes.Bayesian import Bayesian
 from deliberativeLayer.cartographer.map_info import Cspace
 from deliberativeLayer.cartographer.show_map import *
 from deliberativeLayer.frontierBasedExploration.frontierCalculator import *
@@ -46,7 +47,7 @@ if __name__ == '__main__':
 
     print('Sending commands to MRDS server', MRDS_URL)
 
-    c_space = Cspace(-15, -15, 15, 15, cell_size)
+    c_space = Cspace(-100, -100, 100, 100, cell_size)
     bayes_map = Bayesian(c_space.occupancy_grid)
     map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
     robot_sensing = robotSensing()
@@ -54,7 +55,7 @@ if __name__ == '__main__':
 
     try:
         print('Telling the robot to go straight ahead.')
-        response = postSpeed(0, 0.2)
+        response = postSpeed(0.2, 1)
 
         while(1):
             #print('in while!')

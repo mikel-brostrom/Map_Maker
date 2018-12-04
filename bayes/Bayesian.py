@@ -8,7 +8,7 @@ class Bayesian:
 
     def __init__(self, prob_grid):
         self.prob_grid = prob_grid
-        self.maximum_range = 10
+        self.maximum_range = 40
         self.beta = 0.5  # Half lobe angle
         self.accuracy = 0.1
         self.p_max = 0.98
