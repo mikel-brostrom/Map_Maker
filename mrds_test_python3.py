@@ -53,8 +53,6 @@ if __name__ == '__main__':
 
     try:
         print('Telling the robot to go straight ahead.')
-        #response = postSpeed(1, 0)
-        #time.sleep(1)
         response = postSpeed(0, 0.1)
 
         while(1):
@@ -99,10 +97,6 @@ if __name__ == '__main__':
 
 
             fontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
-
-            print(fontiers)
-
-            print('updating map')
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation)
 
