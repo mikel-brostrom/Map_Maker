@@ -61,9 +61,6 @@ if __name__ == '__main__':
     # Max grid value
     maxVal = 15
 
-    # Hard coded values for max/min x,y
-    min_x = -15
-    max_y = 15
     cell_size = 1
 
     print('Sending commands to MRDS server', MRDS_URL)
@@ -75,16 +72,16 @@ if __name__ == '__main__':
     frontier_calculator = frontierCalculator()
 
     # An explored area (white)
-    for rw in range(15, c_space.grid_nr_rows):
-        for cl in range(15, c_space.grid_nr_columns):
-            c_space.occupancy_grid[rw][cl] = 7
+    #for rw in range(15, c_space.grid_nr_rows):
+    #    for cl in range(15, c_space.grid_nr_columns):
+    #        c_space.occupancy_grid[rw][cl] = 7
 
 
     try:
         print('Telling the robot to go straight ahead.')
-        response = postSpeed(1, 0)
-        time.sleep(1)
-        response = postSpeed(0, 0.1)
+        #response = postSpeed(1, 0)
+        #time.sleep(1)
+        response = postSpeed(0.1, 1)
 
         while(1):
             #print('in while!')
@@ -109,7 +106,7 @@ if __name__ == '__main__':
 
             # Calculate the coordinates laser point readings
             sensor_readout_coordinates = robot_sensing.get_sensor_readout_coordinates(robot_coord,\
-                laser_scan_values['Echoes'], laser_angles, c_space.scale)
+                laser_scan_values['Echoes'], laser_angles, orientation)
 
             # Get all the Bresenham lines
             bresenham_lines = robot_sensing.get_bresenham_lines(robot_coord, sensor_readout_coordinates)
@@ -120,7 +117,7 @@ if __name__ == '__main__':
                 #                          bresenham_lines[len(bresenham_lines) - 1][1],robot_row,robot_col)
                 #print(dist)
                 for coordinate in bresenham_line:
-                    pos_to_grid(coordinate[0], coordinate[1], c_space.x_min, c_space.y_max, cell_size)
+                    #pos_to_grid(coordinate[0], coordinate[1], c_space.x_min, c_space.y_max, cell_size)
                     if math.floor(coordinate[0]) < c_space.grid_nr_rows and math.floor(coordinate[1]) < c_space.grid_nr_columns and \
                        math.floor(coordinate[0]) >= 0 and math.floor(coordinate[1]) >= 0:
                         c_space.occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
