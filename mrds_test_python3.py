@@ -102,13 +102,12 @@ if __name__ == '__main__':
 
 
             fontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
+            """
+            #print(fontiers)
 
-            print(fontiers)
-
-            print('updating map')
+            #print('updating map')
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation)
 
     except UnexpectedResponse as ex:
         print('Unexpected response from server when sending speed commands:', ex)
-
