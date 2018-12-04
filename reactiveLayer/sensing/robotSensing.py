@@ -84,7 +84,7 @@ class robotSensing:
         # For each laser beam
         for x in range(0, len(sensor_readout_coordinates)):
             # Calculate its line by Bresenham's algorithm
-            bresenhamLine = list(self.bresenham(robot_coord[0], robot_coord[1], sensor_readout_coordinates[x][0], sensor_readout_coordinates[x][1]))
+            bresenhamLine = list(self.bresenham(robot_coord[0], robot_coord[1],sensor_readout_coordinates[x][0], sensor_readout_coordinates[x][1]))
             # print(bresenhamLine)
             # print("\n")
 

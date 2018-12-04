@@ -35,7 +35,7 @@ class Cspace:
         self.grid_nr_columns = int(self.c_space_height * self.scale)
 
         # Create probability grid
-        self.occupancy_grid = np.ones(shape=(self.grid_nr_rows, self.grid_nr_columns)) * 7
+        self.occupancy_grid = np.ones(shape=(self.grid_nr_rows, self.grid_nr_columns)) * 0.5
 
     def is_within_grid(self, x, y):
         return 0 <= x < self.grid_nr_rows and 0 <= y < self.grid_nr_columns

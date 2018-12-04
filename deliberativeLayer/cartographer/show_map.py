@@ -72,7 +72,7 @@ class ShowMap(object):
         # mapping the grid to an Image
         for col in range(0, self.__size[1]):
             for row in range(0, self.__size[0]):
-                value = grid[row, col]
+                value = grid[row, col]*15
                 # if value is <0 draw a gray pixel else mapping the value between 0 - 255
                 # where 0 is black and 255 is white
                 if value < 0:

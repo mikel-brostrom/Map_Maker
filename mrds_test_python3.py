@@ -20,6 +20,7 @@ from deliberativeLayer.cartographer.show_map import *
 from deliberativeLayer.frontierBasedExploration.frontierCalculator import *
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
+from bayes.Bayesian import *
 
 url = 'http://localhost:50000'
 # HTTPConnection does not want to have http:// in the address apparently, so lest's remove it:
@@ -45,64 +46,68 @@ if __name__ == '__main__':
     cell_size = 1
 
     print('Sending commands to MRDS server', MRDS_URL)
+    print('Fuck maps\n')
 
-    c_space = Cspace(-15, -15, 40, 40, cell_size)
+    c_space = Cspace(-15, -15, 15, 15, cell_size)
+    bayes_map = Bayesian(c_space.occupancy_grid)
     map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
     robot_sensing = robotSensing()
     frontier_calculator = frontierCalculator()
 
     try:
         print('Telling the robot to go straight ahead.')
-        #response = postSpeed(1, 0)
-        #time.sleep(1)
-        response = postSpeed(0, 0.1)
+        response = postSpeed(0, 0.2)
 
         while(1):
-            #print('in while!')
 
             # Get all the laser readout values starting from
             # the one with angle 0 to 270 (in meters)
             laser_scan_values = robot_sensing.get_laser_scan()
-            #print(laser_scan_values)
+
             # Get all the laser angles starting from 0 to 270
             laser_angles = robot_sensing.get_laser_angles()
 
             # Converts the car's (x, y) position to (row, col) coordinate in the grid
             pose = getPose()
             curr_pos = pose['Pose']['Position']
-            #print(curr_pos)
+
             robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
             robot_row = robot_coord[0]
             robot_col = robot_coord[1]
-            #print('Im at coordinate', robot_coord) # These are floats! Not integers!
 
             # Retrieve the angles needed to calculate
-            orientation=getOrientation();
+            orientation=getOrientation()
 
             # Calculate the coordinates laser point readings
-            sensor_readout_coordinates = robot_sensing.get_sensor_readout_coordinates(robot_coord,\
+            sensor_readout_coordinates = robot_sensing.get_sensor_readout_coordinates(robot_coord,
                 laser_scan_values['Echoes'], laser_angles, orientation)
 
             # Get all the Bresenham lines
             bresenham_lines = robot_sensing.get_bresenham_lines(robot_coord, sensor_readout_coordinates)
 
+
+
             for bresenham_line in bresenham_lines:
                 # Calculate the distance from the robot coordinate to the end point of each Bresenham line
                 #dist = calculate_distance(bresenham_line[-1][0],bresenham_line[-1][1],robot_row,robot_col)
                 #                          bresenham_lines[len(bresenham_lines) - 1][1],robot_row,robot_col)
-                #print(dist)
+
+                bayes_map.bayes_handler(bresenham_line, robot_row, robot_col)
+                """
                 for coordinate in bresenham_line:
                     #pos_to_grid(coordinate[0], coordinate[1], c_space.x_min, c_space.y_max, cell_size)
                     if math.floor(coordinate[0]) < c_space.grid_nr_rows and math.floor(coordinate[1]) < c_space.grid_nr_columns and \
                        math.floor(coordinate[0]) >= 0 and math.floor(coordinate[1]) >= 0:
                         c_space.occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
 
+                """
+            # frontier_calculator.find_frontiers(occupancy_grid, robot_coord)
 
-            fontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
+            #fontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
 
-            print(fontiers)
+            #print(fontiers)
 
-            print('updating map')
+            #print('updating map')
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation)
 
