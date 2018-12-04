@@ -39,49 +39,23 @@ def calculate_distance(x1,y1,x2,y2):
 if __name__ == '__main__':
 
     showGUI = True  # set this to False if you run in putty
-    # use the same no. of rows and cols in map and grid:
-    nRows = 100
-    nCols = 65
-    # Initialize a ShowMap object. Do this only once!!
-
-    # create an occupancy grid with all cells set to 7 (unexplored) as
-    # numpy matrix:
-    occupancy_grid = np.ones(shape=(nRows, nCols)) * 7
-    # create a probability grid with all cells set to 0.5 (same probability of being exampled
-    # as unexplored) as numpy matrix:
-    probability_grid = np.ones(shape=(nRows, nCols)) * 0.5
-    # or as a two-dimensional array:
-    # grid = [[7 for col in range(nCols)] for row in range(nRows)]
-    # create some obstacles (black/grey)
-    # Upper left side:
-
-
-
 
     # Max grid value
     maxVal = 15
-
     cell_size = 1
 
     print('Sending commands to MRDS server', MRDS_URL)
-    print('Fuck maps\n')
 
     c_space = Cspace(-15, -15, 40, 40, cell_size)
     map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
     robot_sensing = robotSensing()
     frontier_calculator = frontierCalculator()
 
-    # An explored area (white)
-    #for rw in range(15, c_space.grid_nr_rows):
-    #    for cl in range(15, c_space.grid_nr_columns):
-    #        c_space.occupancy_grid[rw][cl] = 7
-
-
     try:
         print('Telling the robot to go straight ahead.')
         #response = postSpeed(1, 0)
         #time.sleep(1)
-        response = postSpeed(0.1, 1)
+        response = postSpeed(0, 0.1)
 
         while(1):
             #print('in while!')
@@ -96,6 +70,7 @@ if __name__ == '__main__':
             # Converts the car's (x, y) position to (row, col) coordinate in the grid
             pose = getPose()
             curr_pos = pose['Pose']['Position']
+            #print(curr_pos)
             robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
             robot_row = robot_coord[0]
             robot_col = robot_coord[1]
@@ -123,7 +98,11 @@ if __name__ == '__main__':
                         c_space.occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
 
 
-           #frontier_calculator.find_frontiers(occupancy_grid, robot_coord)
+            fontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
+
+            print(fontiers)
+
+            print('updating map')
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation)
 
