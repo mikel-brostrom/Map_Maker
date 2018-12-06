@@ -1,166 +1,220 @@
-import asyncio
+
 from collections import deque
 
 import math
 
-from deliberativeLayer.cartographer import map_info
+# Minimum number of coordinates in a frontier in order to consider it as a possible frontier
+MIN_NUM_FRONTIER_POINTS = 20
+# Maximum value for considering a grid coordinate open
+OPEN_THRESHOLD = 0.4
 
-MIN_NUM_FRONTIER_POINTS = 30
-OPEN_THRESHOLD = 0.2
 
-
-class frontierCalculator:
+class Frontier_calculator:
     """
-    This class is used to represent game positions. It uses a 2-dimensional char array for the board
-    and a Boolean to keep track of which player has the move.
-
-    Author: Ola Ringdahl
+    This class calculates the frontier out of a probability gris
     """
 
-
-    def find_frontiers(self, c_space, robot_coordt):
-        # Algorithm from https://arxiv.org/ftp/arxiv/papers/1806/1806.03581.pdf
-
+    def find_frontiers(self, c_space, robot_coord):
         """
-        Marking lists
+        Calculates all the frontier out of a probability grid
+
+        Algorithm from: Frontier Based Exploration for Autonomous Robot
+        https://arxiv.org/ftp/arxiv/papers/1806/1806.03581.pdf and
+        Robot Exploration with Fast Frontier Detection: Theory and Experiments
+        http://www.ifaamas.org/Proceedings/aamas2012/papers/3A_3.pdf
+
+        Args
+            c_space: the configuration space describing the environment
+            robot_coord: the start coordinate for the BFS
+        Return
+            a list of lists which contains points describing each frontier
         """
-        frontiers=[]
+
+        frontiers = []
         map_open_list = []
         map_close_list = []
         frontier_open_list = []
         frontier_close_list = []
 
-        x = math.floor(robot_coordt[0])
-        y = math.floor(robot_coordt[1])
-
-        #print(x, y)
-
-        robot_coord = [x,y]
+        robot_coord = [math.floor(robot_coord[0]), math.floor(robot_coord[1])]
 
         queue_m = deque([])
         queue_m.append(robot_coord)
         map_open_list.append(robot_coord)
 
         while queue_m:
+
             p = queue_m.popleft()
+
             if p in map_close_list:
                 continue
+
             if self.is_frontier_point(p, c_space):
                 queue_f = deque([])
                 new_frontier = []
-
-                queue_f.append(robot_coord)
+                queue_f.append(p)
                 frontier_open_list.append(p)
 
                 while queue_f:
-                    q = queue_f.popleft(robot_coord)
+
+                    q = queue_f.popleft()
+
                     if q in map_close_list and q in frontier_close_list:
                         continue
-                    if self.is_frontier_point(q, c_space.occupancy_grid):
-                        new_frontier.add(q)
-                        for w in self.adjacent(q):
+
+                    if self.is_frontier_point(q, c_space):
+                        new_frontier.append(q)
+
+                        for w in self.adjacent(q, c_space):
                             if w not in frontier_open_list and w not in frontier_close_list and w\
-                            not in map_close_list:
+                              not in map_close_list:
                                 queue_f.append(w)
-                                frontier_open_list.add(w)
-                    frontier_close_list.add(q)
-                frontiers.add(new_frontier)
-                frontier_close_list.add(new_frontier)
+                                frontier_open_list.append(w)
+
+                    frontier_close_list.append(q)
+
+                if len(new_frontier) > MIN_NUM_FRONTIER_POINTS:
+                    frontiers.append(new_frontier)
+                    frontier_close_list.append(new_frontier)
+
             for v in self.adjacent(p, c_space):
                 if v not in map_open_list and v not in map_close_list and self.has_open_neighbor(v, c_space):
                     queue_m.append(v)
                     map_open_list.append(v)
+
             map_close_list.append(p)
 
-        return frontiers
+
+        return self.frontiers_to_centroid(frontiers)
 
     def has_open_neighbor(self, p, c_space):
         """
-#        Returns True if point has an unknown cell adjacent to it
+        Returns True if the coordinate has an open neighbor
+
+        Args
+            c_space: the configuration space describing the environment
+        Return
+            a boolean value that indicates whether a coordinate has an open neighbor or not
         """
-        if not c_space.is_within_grid(p[0],p[1]):
-            return False
+        #if not c_space.is_within_grid(p[0], p[1]):
+        #    return False
 
         neighbors = self.adjacent(p, c_space)
 
-
-
-        for p in neighbors:
-
-            x, y = p
-
+        for x, y in neighbors:
             if c_space.occupancy_grid[x][y] <= OPEN_THRESHOLD:
                 return True
 
         return False
 
-
     def adjacent(self, p, c_space):
         """
-        Returns the positions adjacent to the point.
+        Retrieves all the coordinates adjacent to another coordinate
+
+        Args
+            c_space: the configuration space describing the environment
+        Return
+            a list of tuples describing the coordinates adjacent to the input coordinate
         """
 
-        x, y = p
+        adjacent_points = []
 
-        x_max = c_space.grid_nr_rows - 1
-
-        y_max = c_space.grid_nr_columns - 1
-
-        adjacent_points = set([])
-
-        if x < x_max:
-            adjacent_points.add((x + 1, y))
-
-        if y < y_max:
-            adjacent_points.add((x, y + 1))
-
-        if x < x_max and y < y_max:
-            adjacent_points.add((x + 1, y + 1))
-
-        if x > 0:
-            adjacent_points.add((x - 1, y))
-
-        if y > 0:
-            adjacent_points.add((x, y - 1))
-
-        if x > 0 and y > 0:
-            adjacent_points.add((x - 1, y - 1))
-
-        if x < x_max and y > 0:
-            adjacent_points.add((x + 1, y - 1))
-
-        if x > 0 and y < y_max:
-            adjacent_points.add((x - 1, y + 1))
+        #   _ _ _
+        #  |_|_|_|
+        #  |_|_|_|  (-1, -1)
+        #  |X|_|_|
+        if c_space.is_within_grid(p[0]-1, p[1]-1):
+            adjacent_points.append((p[0] - 1, p[1]-1))
+        #   _ _ _
+        #  |_|_|_|
+        #  |_|_|_|  (-1, 0)
+        #  |_|X|_|
+        if c_space.is_within_grid(p[0] - 1, p[1]):
+            adjacent_points.append((p[0] - 1, p[1]))
+        #   _ _ _
+        #  |_|_|_|
+        #  |_|_|_|  (-1, 1)
+        #  |_|_|X|
+        if c_space.is_within_grid(p[0] - 1, p[1]+1):
+            adjacent_points.append((p[0] - 1, p[1]+1))
+        #   _ _ _
+        #  |_|_|_|
+        #  |X|_|_|  (0, -1)
+        #  |_|_|_|
+        if c_space.is_within_grid(p[0], p[1]-1):
+            adjacent_points.append((p[0], p[1]-1))
+        #   _ _ _
+        #  |_|_|_|
+        #  |_|_|X|  (0, 1)
+        #  |_|_|_|
+        if c_space.is_within_grid(p[0], p[1]+1):
+            adjacent_points.append((p[0], p[1]+1))
+        #   _ _ _
+        #  |X|_|_|
+        #  |_|_|_|  (1, -1)
+        #  |_|_|_|
+        if c_space.is_within_grid(p[0] + 1, p[1]-1):
+            adjacent_points.append((p[0] + 1, p[1]-1))
+        #   _ _ _
+        #  |_|X|_|
+        #  |_|_|_|  (1, 0)
+        #  |_|_|_|
+        if c_space.is_within_grid(p[0] + 1, p[1]):
+            adjacent_points.append((p[0] + 1, p[1]))
+        #   _ _ _
+        #  |_|_|X|
+        #  |_|_|_|  (1, 1)
+        #  |_|_|_|
+        if c_space.is_within_grid(p[0] + 1, p[1]+1):
+            adjacent_points.append((p[0] + 1, p[1]+1))
 
         return adjacent_points
 
     def is_frontier_point(self, p, c_space):
+        """
+        Any open cell adjacent to an unknown cell is labeled frontier edge cell.
+        In order to consider a coordinate unknown its probability should be 0.5, the
+        value the probability grid is initiated to
 
-        #print(p)
-        if not c_space.is_within_grid(p[0],p[1]):
-            return False
+        Args
+            c_space: the frontiers found in the probability gris
+        Return
+            a boolean value indicating whether the coordinate is a frontier point or not
+        """
+        #if not c_space.is_within_grid(p[0], p[1]):
+        #    return False
 
-        x, y = p
+        adjacent_points_to_p = self.adjacent(p, c_space)
 
-
-
-        epsilon = 0.2
-
-        if abs(c_space.occupancy_grid[p[0]][p[1]] - 0.5) > epsilon:
-
-            return False
-
-
-
-        for p in self.adjacent(p):
-
-            x, y =  math.floor(p)
-
-            if c_space.occupancy_grid[x, y] <= OPEN_THRESHOLD:
-
-                return True
-
-
+        # If p is an open coordinate
+        if c_space.occupancy_grid[p[0]][p[1]] <= OPEN_THRESHOLD:
+            # And has an adjacent unknown cell
+            for x, y in adjacent_points_to_p:
+                if 0.30 <= c_space.occupancy_grid[x, y] <= 0.7:
+                    return True
 
         return False
 
+    def frontiers_to_centroid(self, frontiers):
+        """
+        Get the list of frontiers and calculate their centroid
+
+        Args
+            frontiers: the frontiers found in the probability grid
+        Return
+            a list of tuples describing the centroid of each frontier
+        """
+        sum_x = 0
+        sum_y = 0
+        frontier_centroid_list = []
+        for frontier in frontiers:
+            for x,y in frontier:
+                sum_x += x
+                sum_y += y
+            length = len(frontier)
+            print(length)
+            frontier_centroid_list.append((sum_x/length, sum_y/length))
+            sum_x = 0
+            sum_y = 0
+
+        return frontier_centroid_list

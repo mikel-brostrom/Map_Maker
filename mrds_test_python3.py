@@ -12,7 +12,7 @@ Updated by Ola Ringdahl 2017-10-18 (added example code that use showMap)
 Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with http://
     without getting a socket error. Added a function for converting (x,y) to (row,col))
 """
-
+import sched
 import time
 
 from bayes.Bayesian import Bayesian
@@ -26,7 +26,7 @@ url = 'http://localhost:50000'
 # HTTPConnection does not want to have http:// in the address apparently, so lest's remove it:
 MRDS_URL = url[len("http://"):]
 HEADERS = {"Content-type": "application/json", "Accept": "text/json"}
-
+s = sched.scheduler(time.time, time.sleep)
 
 class UnexpectedResponse(Exception):
     pass
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     bayes_map = Bayesian(c_space.occupancy_grid)
     map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
     robot_sensing = robotSensing()
-    frontier_calculator = frontierCalculator()
+    frontier_calculator = Frontier_calculator()
 
     try:
         print('Telling the robot to go straight ahead.')
@@ -89,10 +89,6 @@ if __name__ == '__main__':
 
 
             for bresenham_line in bresenham_lines:
-                # Calculate the distance from the robot coordinate to the end point of each Bresenham line
-                #dist = calculate_distance(bresenham_line[-1][0],bresenham_line[-1][1],robot_row,robot_col)
-                #                          bresenham_lines[len(bresenham_lines) - 1][1],robot_row,robot_col)
-
                 bayes_map.bayes_handler(bresenham_line, robot_row, robot_col)
                 """
                 for coordinate in bresenham_line:
@@ -100,15 +96,12 @@ if __name__ == '__main__':
                     if math.floor(coordinate[0]) < c_space.grid_nr_rows and math.floor(coordinate[1]) < c_space.grid_nr_columns and \
                        math.floor(coordinate[0]) >= 0 and math.floor(coordinate[1]) >= 0:
                         c_space.occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
+                """
 
+            frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
+            print(frontiers)
 
-            fontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
-            """
-            #print(fontiers)
-
-            #print('updating map')
-
-            map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation)
+            map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers)
 
     except UnexpectedResponse as ex:
         print('Unexpected response from server when sending speed commands:', ex)
