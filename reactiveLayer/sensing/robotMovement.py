@@ -11,6 +11,10 @@ HEADERS = {"Content-type": "application/json", "Accept": "text/json"}
 class UnexpectedResponse(Exception):
     pass
 
+def get_position():
+    """Returns the XYZ position"""
+    return get_pose()['Pose']['Position']
+
 
 def post_speed(angular_speed, linear_speed):
     """Sends a speed command to the MRDS server"""

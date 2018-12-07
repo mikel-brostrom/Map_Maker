@@ -1,16 +1,17 @@
 from datetime import time
 from math import sqrt, atan2, pi, cos
 
-from reactiveLayer.sensing.robotMovement import get_heading, post_speed, UnexpectedResponse, get_orientation
+from reactiveLayer.sensing.robotMovement import get_heading, post_speed,\
+     get_orientation, get_position
+
 
 class PurePursuit:
 
-    def getPosition(self):
+    def get_position(self):
         pass
 
-    """Get the next goal point from the robot's position from a fixed look-a-head distance"""
-
     def get_carrot_point(self, path, pos, look_ahead_distance):
+        """Get the next goal point from the robot's position from a fixed look-a-head distance"""
         if path:
             for i in range(len(path)):
                 # Get the coordinate on the top of the stack
@@ -28,14 +29,13 @@ class PurePursuit:
         else:
             print("Stack failed")
 
-    """Pythagoras theorem"""
     def pythagoras_theorem(self, x, y):
+        """Pythagoras theorem"""
         return sqrt((x ** 2) + (y ** 2))
 
-
-    """Get the next goal point from the robot's position from a fixed look-a-head distance"""
     def get_filtered_path(self, path, pos):
-        minDistance = 100
+        """Get the next goal point from the robot's position from a fixed look-a-head distance"""
+        min_distance = 100
         location = 0
         if path:
             for i in range(len(path)):
@@ -49,8 +49,8 @@ class PurePursuit:
                 h = self.pythagoras_theorem(dx, dy)
                 # Update the location for the path coordinate
                 # corresponding to the minimal distance
-                if h < minDistance:
-                    minDistance = h
+                if h < min_distance:
+                    min_distance = h
                     location = i + 1
 
             # Pop everyting before this location
@@ -62,8 +62,8 @@ class PurePursuit:
         else:
             print("Stack failed")
 
-    """Calculate vehicle orientation with respect to the global coordinate system"""
     def get_orientation(self):
+        """Calculate vehicle orientation with respect to the global coordinate system"""
         # Get the XY Orientation as a bearing unit vector"""
         heading = get_heading()
         # Extract the x and y component
@@ -73,18 +73,13 @@ class PurePursuit:
         orientation = atan2(hy, hx)
         return orientation
 
-    """Calculate look ahead angle: The angle between the carrot point and the world coordinate system"""
-
     def robot_look_ahead(self, dx, dy):
-
+        """Calculate look ahead angle: The angle between the carrot point and the world coordinate system"""
         lookAheadAngle = atan2(dy, dx)
-
         return lookAheadAngle
 
-    """Convert a coordinate to the vehicles's coordinate system"""
-
     def tranform_to_vcs(self, actual_coord, carrot_coord):
-
+        """Convert a coordinate to the vehicles's coordinate system"""
         # Calculate distance to the goal point from the robot
         dx = carrot_coord['X'] - actual_coord['X']
         dy = carrot_coord['Y'] - actual_coord['Y']
@@ -100,38 +95,37 @@ class PurePursuit:
         delta_x = h * cos(alfa)
         return (delta_x, h)
 
-    """ Calculate the curvature between the vehicle and the carrot point """
-
     def calculate_curvature(self, deltaX, h):
+        """ Calculate the curvature between the vehicle and the carrot point """
         # Calculate the curvature
         curvature = -(2 * deltaX) / (h ** 2)
         return curvature
 
-    """ Orientates the vehicle thowards the first coordinata in the given path """
-    def init_orientation(self, path, lookAeadDistance):
+    def init_orientation(self, path, look_ahead_distance):
+        """ Orientates the vehicle thowards the first coordinata in the given path """
 
         # Determine the current location of the vehicle
 
-        actualCoord = getPosition()
+        actual_coord = get_position()
 
         # Find the point on the path closest to the vehicle
-        carrotPoint = self.get_carrot_point(path, actualCoord, lookAeadDistance)
+        carrotPoint = self.get_carrot_point(path, actual_coord, look_ahead_distance)
 
         # Calculate distance to the goal point from the robot
-        dx = carrotPoint['X'] - actualCoord['X']
-        dy = carrotPoint['Y'] - actualCoord['Y']
+        dx = carrotPoint['X'] - actual_coord['X']
+        dy = carrotPoint['Y'] - actual_coord['Y']
 
         # Initialize values
-        orientationAngle = get_orientation()
-        lookAheadAngle = self.robot_look_ahead(dx, dy)
+        orientation_angle = get_orientation()
+        look_ahead_angle = self.robot_look_ahead(dx, dy)
 
-        angleDiff = lookAheadAngle - orientationAngle
+        angleDiff = look_ahead_angle - orientation_angle
 
-        while ((angleDiff > 1) or (angleDiff < -1)):
+        while ((angle_diff > 1) or (angle_diff < -1)):
             # Update values
-            orientationAngle = get_orientation()
-            lookAheadAngle = self.robot_look_ahead(dx, dy)
-            angleDiff = lookAheadAngle - orientationAngle
+            orientation_angle = get_orientation()
+            look_ahead_angle = self.robot_look_ahead(dx, dy)
+            angle_diff = look_ahead_angle - orientation_angle
             post_speed(-1, 0)
             time.sleep(0.01)
         return
