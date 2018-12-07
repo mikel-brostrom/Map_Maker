@@ -84,7 +84,6 @@ class Frontier_calculator:
 
             map_close_list.append(p)
 
-
         return self.frontiers_to_centroid(frontiers)
 
     def has_open_neighbor(self, p, c_space):
