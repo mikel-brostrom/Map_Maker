@@ -13,7 +13,7 @@ Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with
     without getting a socket error. Added a function for converting (x,y) to (row,col))
 """
 import sched
-import time
+
 
 from bayes.Bayesian import Bayesian
 from deliberativeLayer.cartographer.map_info import Cspace
@@ -23,6 +23,7 @@ from deliberativeLayer.frontierBasedExploration.aStar import *
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
 from reactiveLayer.pathTracking.purePursuit import *
+import time
 
 url = 'http://localhost:50000'
 # HTTPConnection does not want to have http:// in the address apparently, so lest's remove it:
@@ -51,16 +52,19 @@ if __name__ == '__main__':
 
     print('Sending commands to MRDS server', MRDS_URL)
 
-    c_space = Cspace(-100, -100, 100, 100, cell_size)
+    c_space = Cspace(-60, -60, 60, 60, cell_size)
     bayes_map = Bayesian(c_space.occupancy_grid)
     map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
     robot_sensing = robotSensing()
     frontier_calculator = Frontier_calculator()
     path_planner = PathPlanner()
+    pure_pursuit = PurePursuit()
+    linear_speed = 1
+    look_ahead_distance=1
 
     try:
         print('Telling the robot to go straight ahead.')
-        response = post_speed(0.2, 1)
+        response = post_speed(0, 0)
 
         while(1):
             #print('in while!')
@@ -104,23 +108,51 @@ if __name__ == '__main__':
                 """
 
             frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
-            print(frontiers)
+            #print("Frontiers", frontiers)
 
-            if len(frontiers) >= 1 and len(path) < 1:
-                map = c_space.occupancy_grid
+            f = frontiers[0]
+            f1 = math.floor(f[0])
+            f2 = math.floor(f[1])
+            goal = (f1, f2)
 
-                #start
+            if len(frontiers) >= 1: #and len(path) <= 1:
+                print("calcultaed path")
                 robot_row = math.floor(robot_coord[0])
                 robot_col = math.floor(robot_coord[1])
                 start = (robot_row, robot_col)
-                # start, goal = (1, 4), (7, 8)
 
-                goal = frontiers[0]
-                came_from, cost_so_far = path_planner.a_star_search(map, start, goal)
+                came_from, cost_so_far = path_planner.a_star_search(start, goal, c_space)
                 path = path_planner.reconstruct_path(came_from, start, goal)
-                print(path)
+                print(reversed(path))
+                print(robot_coord)
 
-            map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers)
+
+                # Set the vehicle to point in the right direction from the beginning
+                #pure_pursuit.init_orientation(path, look_ahead_distance)
+
+                #for cell in path:
+                #    c_space.occupancy_grid[cell[0]][cell[1]] = float(1)
+
+            if len(path) > 1:
+                carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)
+
+                if carrot_coordinate:
+                    # Transform coorinates system to vehicle coordinate system
+                    VCS = pure_pursuit.tranform_to_vcs(robot_coord, carrot_coordinate)
+
+                    # Calculate the curvature of the circular arc
+                    curvature = pure_pursuit.calculate_curvature(VCS[0], VCS[1])
+
+                    # Calculate angular speed
+                    angularSpeed = 4*curvature * linear_speed
+
+                    # Apply angular and linear speed to the vehicle
+                    post_speed(angularSpeed, linear_speed)
+                else:
+                    post_speed(0, 0)
+
+            map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
+
 
     except UnexpectedResponse as ex:
         print('Unexpected response from server when sending speed commands:', ex)

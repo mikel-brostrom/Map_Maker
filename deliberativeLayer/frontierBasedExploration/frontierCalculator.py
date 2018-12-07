@@ -211,7 +211,7 @@ class Frontier_calculator:
                 sum_x += x
                 sum_y += y
             length = len(frontier)
-            print(length)
+            # print('<frontiers_to_centroid>', length)
             frontier_centroid_list.append((sum_x/length, sum_y/length))
             sum_x = 0
             sum_y = 0

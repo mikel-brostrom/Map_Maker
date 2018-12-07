@@ -5,7 +5,7 @@ import math
 
 class PathPlanner:
 
-    def neighbour(self, cell):
+    def neighbour(self, cell,c_space):
         row = cell[0]
         col = cell[1]
         neighbours = []
@@ -16,8 +16,8 @@ class PathPlanner:
 
                 if i == 0 and j == 0:
                     continue
-
-                neighbours.append(neighbour)
+                if c_space.is_within_grid(neighbour[0], neighbour[1]):
+                    neighbours.append(neighbour)
         return neighbours
 
     def print_map(self):
@@ -27,8 +27,14 @@ class PathPlanner:
                 print("{:.1f}".format((self.map[row][col])), end=' ')
             print()
 
-    def cost(self, current, next):
-        heuristic_const = 1
+    def cost(self, current, next, grid):
+
+        #Object detected
+        if grid[next[0]][next[1]] == 1:
+            heuristic_const = 100
+        else:
+            heuristic_const = 100
+
         dx = abs(current[0] - next[0])
         dy = abs(current[1] - next[1])
         return heuristic_const * math.sqrt(dx * dx + dy * dy)
@@ -41,7 +47,7 @@ class PathPlanner:
         (x2, y2) = b
         return abs(x1 - x2) + abs(y1 - y2)
 
-    def a_star_search(self, graph, start, goal):
+    def a_star_search(self, start, goal, c_space):
         frontier = PriorityQueue()
         frontier.put(start, 0)
         came_from = {}
@@ -55,14 +61,14 @@ class PathPlanner:
             if current == goal:
                 break
 
-            for next in self.neighbour(current):
-                new_cost = cost_so_far[current] + self.cost(current, next)
+            for neighbour in self.neighbour(current, c_space):
+                new_cost = cost_so_far[current] + self.cost(current, neighbour, c_space.occupancy_grid)
 
-                if next not in cost_so_far or new_cost < cost_so_far[next]:
-                    cost_so_far[next] = new_cost
-                    priority = new_cost + self.heuristic(goal, next)
-                    frontier.put(next, priority)
-                    came_from[next] = current
+                if neighbour not in cost_so_far or new_cost < cost_so_far[neighbour]:
+                    cost_so_far[neighbour] = new_cost
+                    priority = new_cost + self.heuristic(goal, neighbour)
+                    frontier.put(neighbour, priority)
+                    came_from[neighbour] = current
 
         return came_from, cost_so_far
 
@@ -73,7 +79,7 @@ class PathPlanner:
             path.append(current)
             current = came_from[current]
         path.append(start)  # optional
-        path.reverse()  # optional
+        #path.reverse()  # optional
         return path
 
 
