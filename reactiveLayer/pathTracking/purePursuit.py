@@ -1,7 +1,7 @@
 from datetime import time
 from math import sqrt, atan2, pi, cos
 
-from reactiveLayer.sensing.robotMovement import getHeading, postSpeed, UnexpectedResponse, getOrientation
+from reactiveLayer.sensing.robotMovement import get_heading, post_speed, UnexpectedResponse, get_orientation
 
 class PurePursuit:
 
@@ -32,25 +32,6 @@ class PurePursuit:
     def pythagoras_theorem(self, x, y):
         return sqrt((x ** 2) + (y ** 2))
 
-
-    """Get the next goal point from the robot's position from a fixed look-a-head distance"""
-    def get_carrot_point(self, path, pos, lookAeadDistance):
-        if path:
-            for i in range(len(path)):
-                # Get the coordinate on the top of the stack
-                p = path[len(path) - 1]
-                # Caculate the x and y distance from the actual
-                # position to the carrot point
-                dx = p['X'] - pos['X']
-                dy = p['Y'] - pos['Y']
-                # Calculate the distance
-                h = self.pythagoras_theorem(dx, dy)
-                if h < lookAeadDistance:
-                    path.pop()
-                else:
-                    return p
-        else:
-            print("Stack failed")
 
     """Get the next goal point from the robot's position from a fixed look-a-head distance"""
     def get_filtered_path(self, path, pos):
@@ -84,7 +65,7 @@ class PurePursuit:
     """Calculate vehicle orientation with respect to the global coordinate system"""
     def get_orientation(self):
         # Get the XY Orientation as a bearing unit vector"""
-        heading = getHeading()
+        heading = get_heading()
         # Extract the x and y component
         hx = heading['X']
         hy = heading['Y']
@@ -102,22 +83,22 @@ class PurePursuit:
 
     """Convert a coordinate to the vehicles's coordinate system"""
 
-    def tranform_to_vcs(self, actualCoord, carrotCoord):
+    def tranform_to_vcs(self, actual_coord, carrot_coord):
 
         # Calculate distance to the goal point from the robot
-        dx = carrotCoord['X'] - actualCoord['X']
-        dy = carrotCoord['Y'] - actualCoord['Y']
+        dx = carrot_coord['X'] - actual_coord['X']
+        dy = carrot_coord['Y'] - actual_coord['Y']
         h = self.pythagoras_theorem(dx, dy)
-        # Retieve the angles needed to calculate alfa
-        orientationAngle = getOrientation()
-        lookAheadAngle = self.robot_look_ahead(dx, dy)
+        # Retrieve the angles needed to calculate alfa
+        orientation_angle = get_orientation()
+        look_ahead_angle = self.robot_look_ahead(dx, dy)
         # Calculate the angle from the vehicle to the carrot point in the
         # vehicle's coordinate system
-        alfa = pi / 2 - orientationAngle + lookAheadAngle
-        # Caculate the distance to the carrot pointe in the vehicle's
+        alfa = pi / 2 - orientation_angle + look_ahead_angle
+        # Calculate the distance to the carrot points in the vehicle's
         # coordinate system
-        deltaX = h * cos(alfa)
-        return (deltaX, h)
+        delta_x = h * cos(alfa)
+        return (delta_x, h)
 
     """ Calculate the curvature between the vehicle and the carrot point """
 
@@ -141,17 +122,17 @@ class PurePursuit:
         dy = carrotPoint['Y'] - actualCoord['Y']
 
         # Initialize values
-        orientationAngle = getOrientation()
+        orientationAngle = get_orientation()
         lookAheadAngle = self.robot_look_ahead(dx, dy)
 
         angleDiff = lookAheadAngle - orientationAngle
 
         while ((angleDiff > 1) or (angleDiff < -1)):
             # Update values
-            orientationAngle = getOrientation()
+            orientationAngle = get_orientation()
             lookAheadAngle = self.robot_look_ahead(dx, dy)
             angleDiff = lookAheadAngle - orientationAngle
-            postSpeed(-1, 0)
+            post_speed(-1, 0)
             time.sleep(0.01)
         return
 
