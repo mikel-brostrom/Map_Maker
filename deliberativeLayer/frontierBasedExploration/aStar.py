@@ -1,2 +1,0 @@
-class Pure_pursuit:
-    
