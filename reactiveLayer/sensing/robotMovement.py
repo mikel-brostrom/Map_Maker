@@ -7,13 +7,15 @@ MRDS_URL = url[len("http://"):]
 
 HEADERS = {"Content-type": "application/json", "Accept": "text/json"}
 
+
 class UnexpectedResponse(Exception):
     pass
 
-def postSpeed(angularSpeed, linearSpeed):
+
+def post_speed(angular_speed, linear_speed):
     """Sends a speed command to the MRDS server"""
     mrds = http.client.HTTPConnection(MRDS_URL)
-    params = json.dumps({'TargetAngularSpeed': angularSpeed, 'TargetLinearSpeed': linearSpeed})
+    params = json.dumps({'TargetAngularSpeed': angular_speed, 'TargetLinearSpeed': linear_speed})
     mrds.request('POST', '/lokarria/differentialdrive', params, HEADERS)
     response = mrds.getresponse()
     status = response.status
@@ -24,7 +26,7 @@ def postSpeed(angularSpeed, linearSpeed):
         raise UnexpectedResponse(response)
 
 
-def getPose():
+def get_pose():
     """Reads the current position and orientation from the MRDS"""
     mrds = http.client.HTTPConnection(MRDS_URL)
     mrds.request('GET', '/lokarria/localization')
@@ -37,10 +39,10 @@ def getPose():
         return UnexpectedResponse(response)
 
 
-"""Calculate vehicle orientation with respect to the global coordinate system"""
-def getOrientation():
+def get_orientation():
+    """Calculate vehicle orientation with respect to the global coordinate system"""
     # Get the XY Orientation as a bearing unit vector"""
-    heading = getHeading()
+    heading = get_heading()
     # Extract the x and y component
     hx = heading['X']
     hy = heading['Y']
@@ -49,9 +51,9 @@ def getOrientation():
     return orientation
 
 
-def getHeading():
+def get_heading():
     """Returns the XY Orientation as a heading unit vector"""
-    return heading(getPose()['Pose']['Orientation'])
+    return heading(get_pose()['Pose']['Orientation'])
 
 
 def heading(q):

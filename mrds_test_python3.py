@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     try:
         print('Telling the robot to go straight ahead.')
-        response = postSpeed(0.2, 1)
+        response = post_speed(0.2, 1)
 
         while(1):
             #print('in while!')
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             laser_angles = robot_sensing.get_laser_angles()
 
             # Converts the car's (x, y) position to (row, col) coordinate in the grid
-            pose = getPose()
+            pose = get_pose()
             curr_pos = pose['Pose']['Position']
 
             robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
@@ -77,7 +77,7 @@ if __name__ == '__main__':
             #print('Im at coordinate', robot_coord) # These are floats! Not integers!
 
             # Retrieve the angles needed to calculate
-            orientation=getOrientation()
+            orientation=get_orientation()
 
             # Calculate the coordinates laser point readings
             sensor_readout_coordinates = robot_sensing.get_sensor_readout_coordinates(robot_coord,

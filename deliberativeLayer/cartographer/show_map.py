@@ -4,7 +4,7 @@ import time
 import numpy as np
 from  PIL import Image
 
-from reactiveLayer.sensing.robotMovement import getPose
+from reactiveLayer.sensing.robotMovement import get_pose
 
 """
 ShowMap creates a Gui for showing the progress of the created map and saves it to file every 5 second
