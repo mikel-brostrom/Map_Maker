@@ -19,14 +19,16 @@ from bayes.Bayesian import Bayesian
 from deliberativeLayer.cartographer.map_info import Cspace
 from deliberativeLayer.cartographer.show_map import *
 from deliberativeLayer.frontierBasedExploration.frontierCalculator import *
+from deliberativeLayer.frontierBasedExploration.aStar import *
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
+from reactiveLayer.pathTracking.purePursuit import *
 
 url = 'http://localhost:50000'
 # HTTPConnection does not want to have http:// in the address apparently, so lest's remove it:
 MRDS_URL = url[len("http://"):]
 HEADERS = {"Content-type": "application/json", "Accept": "text/json"}
-s = sched.scheduler(time.time, time.sleep)
+#s = sched.scheduler(time.time, time.sleep)
 
 class UnexpectedResponse(Exception):
     pass
@@ -44,6 +46,8 @@ if __name__ == '__main__':
     # Max grid value
     maxVal = 15
     cell_size = 1
+    path = []
+    path_follower = PurePursuit()
 
     print('Sending commands to MRDS server', MRDS_URL)
 
@@ -100,6 +104,20 @@ if __name__ == '__main__':
 
             frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
             print(frontiers)
+
+            if len(frontiers) >= 1 and len(path) >= 1:
+                map = c_space.occupancy_grid
+
+                #start
+                robot_row = math.floor(robot_coord[0])
+                robot_col = math.floor(robot_coord[1])
+                start = (robot_row, robot_col)
+                # start, goal = (1, 4), (7, 8)
+
+                goal = frontiers[0]
+                came_from, cost_so_far = a_star_search(map, start, goal)
+                path = reconstruct_path(came_from, start, goal)
+                print(path)
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers)
 
