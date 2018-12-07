@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     c_space = Cspace(-60, -60, 60, 60, cell_size)
     bayes_map = Bayesian(c_space.occupancy_grid)
-    map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
+    map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_cols, showGUI)
     robot_sensing = robotSensing()
     frontier_calculator = Frontier_calculator()
     path_planner = PathPlanner()
@@ -95,10 +95,9 @@ if __name__ == '__main__':
             # Get all the Bresenham lines
             bresenham_lines = robot_sensing.get_bresenham_lines(robot_coord, sensor_readout_coordinates)
 
-
-
             for bresenham_line in bresenham_lines:
-                bayes_map.bayes_handler(bresenham_line, robot_row, robot_col)
+                bayes_map.bayes_handler(bresenham_line, robot_row, robot_col, c_space.get_grid_nr_rows(),
+                                        c_space.get_grid_nr_cols())
                 """
                 for coordinate in bresenham_line:
                     #pos_to_grid(coordinate[0], coordinate[1], c_space.x_min, c_space.y_max, cell_size)
@@ -137,14 +136,14 @@ if __name__ == '__main__':
                 carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)
 
                 if carrot_coordinate:
-                    # Transform coorinates system to vehicle coordinate system
-                    VCS = pure_pursuit.tranform_to_vcs(robot_coord, carrot_coordinate)
+                    # Transform coordinates system to vehicle coordinate system
+                    vcs = pure_pursuit.tranform_to_vcs(robot_coord, carrot_coordinate)
 
                     # Calculate the curvature of the circular arc
-                    curvature = pure_pursuit.calculate_curvature(VCS[0], VCS[1])
+                    curvature = pure_pursuit.calculate_curvature(vcs[0], vcs[1])
 
                     # Calculate angular speed
-                    angularSpeed = 4*curvature * linear_speed
+                    angularSpeed = 6*curvature * linear_speed
 
                     # Apply angular and linear speed to the vehicle
                     post_speed(angularSpeed, linear_speed)

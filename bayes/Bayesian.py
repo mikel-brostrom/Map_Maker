@@ -15,7 +15,7 @@ class Bayesian:
         self.robot_row = 0
         self.robot_col = 0
 
-    def bayes_handler(self, bresenham_line, robot_row, robot_col):
+    def bayes_handler(self, bresenham_line, robot_row, robot_col, max_rows, max_cols):
         """
 
         :param bresenham_line:
@@ -36,13 +36,16 @@ class Bayesian:
 
         for i in range(0, len(bresenham_line)):
 
+
             # Update probability for a cell to be occupied
             prob_grid_x = int(bresenham_line[i][0])
             prob_grid_y = int(bresenham_line[i][1])
-            prob_grid = (prob_grid_x, prob_grid_y)
-            # Calculate probability for a cell to be occupied
-            p_occupied = self.bayes_rule(sensor, prob_grid)
-            self.prob_grid[prob_grid_x][prob_grid_y] = p_occupied
+            if prob_grid_x < max_rows and prob_grid_y < max_cols and prob_grid_x > 0 and prob_grid_y > 0:
+                prob_grid = (prob_grid_x, prob_grid_y)
+                # Calculate probability for a cell to be occupied
+                p_occupied = self.bayes_rule(sensor, prob_grid)
+                self.prob_grid[prob_grid_x][prob_grid_y] = p_occupied
+
 
     def bayes_rule(self, sensor_cell, grid_cell):
         """

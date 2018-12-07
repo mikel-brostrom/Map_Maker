@@ -13,7 +13,7 @@ class Cspace:
         :param y2: y coordinate of top left corner of the area to explore
         :param scale: resolution, i.e the number of cspace cells per real world meter
         """
-        # The size of the cell in CSPACE
+        # The size of the cell in c_space
         self.cell_size = cell_size
         # The scaling needed to comply with the cell size
         self.scale = 1 / cell_size
@@ -32,13 +32,13 @@ class Cspace:
 
         # Get number of grid rows and column
         self.grid_nr_rows = int(self.c_space_width * self.scale)
-        self.grid_nr_columns = int(self.c_space_height * self.scale)
+        self.grid_nr_cols = int(self.c_space_height * self.scale)
 
         # Create probability grid
-        self.occupancy_grid = np.ones(shape=(self.grid_nr_rows, self.grid_nr_columns)) * 0.5
+        self.occupancy_grid = np.ones(shape=(self.grid_nr_rows, self.grid_nr_cols)) * 0.5
 
     def is_within_grid(self, x, y):
-        return 0 <= x < self.grid_nr_rows and 0 <= y < self.grid_nr_columns
+        return 0 <= x < self.grid_nr_rows and 0 <= y < self.grid_nr_cols
 
     def neighbour(self, coords):
         row = coords[0]
@@ -54,3 +54,9 @@ class Cspace:
 
                 neighbours.append(neighbour)
         return neighbours
+
+    def get_grid_nr_rows(self):
+        return self.grid_nr_rows
+
+    def get_grid_nr_cols(self):
+        return self.grid_nr_cols
