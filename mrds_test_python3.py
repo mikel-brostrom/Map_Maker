@@ -56,6 +56,7 @@ if __name__ == '__main__':
     map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_columns, showGUI)
     robot_sensing = robotSensing()
     frontier_calculator = Frontier_calculator()
+    path_planner = PathPlanner()
 
     try:
         print('Telling the robot to go straight ahead.')
@@ -105,7 +106,7 @@ if __name__ == '__main__':
             frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
             print(frontiers)
 
-            if len(frontiers) >= 1 and len(path) >= 1:
+            if len(frontiers) >= 1 and len(path) < 1:
                 map = c_space.occupancy_grid
 
                 #start
@@ -115,8 +116,8 @@ if __name__ == '__main__':
                 # start, goal = (1, 4), (7, 8)
 
                 goal = frontiers[0]
-                came_from, cost_so_far = a_star_search(map, start, goal)
-                path = reconstruct_path(came_from, start, goal)
+                came_from, cost_so_far = path_planner.a_star_search(map, start, goal)
+                path = path_planner.reconstruct_path(came_from, start, goal)
                 print(path)
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers)

@@ -39,3 +39,18 @@ class Cspace:
 
     def is_within_grid(self, x, y):
         return 0 <= x < self.grid_nr_rows and 0 <= y < self.grid_nr_columns
+
+    def neighbour(self, coords):
+        row = coords[0]
+        col = coords[1]
+        neighbours = []
+
+        for i in range(-1,2):
+            for j in range(-1,2):
+                neighbour = (row + i, col + j)
+
+                if i == 0 and j == 0:
+                    continue
+
+                neighbours.append(neighbour)
+        return neighbours
