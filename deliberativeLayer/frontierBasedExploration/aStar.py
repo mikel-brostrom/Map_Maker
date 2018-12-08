@@ -5,11 +5,11 @@ import math
 
 class PathPlanner:
 
-    def neighbour(self, cell,c_space):
+    def neighbour(self, cell, c_space):
         row = cell[0]
         col = cell[1]
         neighbours = []
-
+        self.map = c_space.occupancy_grid
         for i in range(-1,2):
             for j in range(-1,2):
                 neighbour = (row + i, col + j)
@@ -30,10 +30,10 @@ class PathPlanner:
     def cost(self, current, next, grid):
 
         #Object detected
-        if grid[next[0]][next[1]] == 1:
-            heuristic_const = 100
+        if grid[next[0]][next[1]] >= 0.7:
+            heuristic_const = 10
         else:
-            heuristic_const = 100
+            heuristic_const = 1
 
         dx = abs(current[0] - next[0])
         dy = abs(current[1] - next[1])
@@ -62,7 +62,7 @@ class PathPlanner:
                 break
 
             for neighbour in self.neighbour(current, c_space):
-                new_cost = cost_so_far[current] + self.cost(current, neighbour, c_space.occupancy_grid)
+                new_cost = cost_so_far[current] + self.cost(current, neighbour, c_space.expanded_occupancy_grid)
 
                 if neighbour not in cost_so_far or new_cost < cost_so_far[neighbour]:
                     cost_so_far[neighbour] = new_cost

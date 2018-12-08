@@ -14,7 +14,7 @@ Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with
 """
 import sched
 
-
+from multiprocessing import Pool
 from bayes.Bayesian import Bayesian
 from deliberativeLayer.cartographer.map_info import Cspace
 from deliberativeLayer.cartographer.show_map import *
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     print('Sending commands to MRDS server', MRDS_URL)
 
-    c_space = Cspace(-60, -60, 60, 60, cell_size)
+    c_space = Cspace(-30, -20, 40, 50, cell_size)
     bayes_map = Bayesian(c_space.occupancy_grid)
     map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_cols, showGUI)
     robot_sensing = robotSensing()
@@ -60,7 +60,8 @@ if __name__ == '__main__':
     path_planner = PathPlanner()
     pure_pursuit = PurePursuit()
     linear_speed = 1
-    look_ahead_distance=1
+    look_ahead_distance = 2
+    #pool = Pool(1)
 
     try:
         print('Telling the robot to go straight ahead.')
@@ -98,39 +99,47 @@ if __name__ == '__main__':
             for bresenham_line in bresenham_lines:
                 bayes_map.bayes_handler(bresenham_line, robot_row, robot_col, c_space.get_grid_nr_rows(),
                                         c_space.get_grid_nr_cols())
-                """
-                for coordinate in bresenham_line:
-                    #pos_to_grid(coordinate[0], coordinate[1], c_space.x_min, c_space.y_max, cell_size)
-                    if math.floor(coordinate[0]) < c_space.grid_nr_rows and math.floor(coordinate[1]) < c_space.grid_nr_columns and \
-                       math.floor(coordinate[0]) >= 0 and math.floor(coordinate[1]) >= 0:
-                        c_space.occupancy_grid[math.floor(coordinate[0])][math.floor(coordinate[1])] = 0
-                """
 
-            frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
-            #print("Frontiers", frontiers)
+            #c_space.calculate_expanded_occupancy_grid()
+            object_detected = 0
 
-            f = frontiers[0]
-            f1 = math.floor(f[0])
-            f2 = math.floor(f[1])
-            goal = (f1, f2)
+            for cell in path:
+                x, y = ( cell[0], cell[1] )
 
-            if len(frontiers) >= 1: #and len(path) <= 1:
-                print("calcultaed path")
+                #for i in range(-1, 2):
+                #    for j in range(-1, 2):
+
+                if c_space.occupancy_grid[x][y] >= 0.8:
+                    print("Problem on path at: ", c_space.occupancy_grid[x][y])
+                    object_detected = 1
+
+
+            if len(path) <= 1 or object_detected:
+                post_speed(0, 0)
+                frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
+
+                f = frontiers[0]
+                print("Goal:", f)
+                f1 = math.floor(f[0])
+                f2 = math.floor(f[1])
+                goal = (f1, f2)
+
                 robot_row = math.floor(robot_coord[0])
                 robot_col = math.floor(robot_coord[1])
                 start = (robot_row, robot_col)
 
                 came_from, cost_so_far = path_planner.a_star_search(start, goal, c_space)
                 path = path_planner.reconstruct_path(came_from, start, goal)
-                print(reversed(path))
-                print(robot_coord)
+                print('Path', path)
 
+                robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
 
                 # Set the vehicle to point in the right direction from the beginning
-                #pure_pursuit.init_orientation(path, look_ahead_distance)
+                #pure_pursuit.init_orientation(path, look_ahead_distance, robot_coord)
 
-                #for cell in path:
-                #    c_space.occupancy_grid[cell[0]][cell[1]] = float(1)
+            #else:
+                #post_speed(0, 0)
+                #print('All frontiers explored"')
 
             if len(path) > 1:
                 carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)
@@ -143,12 +152,12 @@ if __name__ == '__main__':
                     curvature = pure_pursuit.calculate_curvature(vcs[0], vcs[1])
 
                     # Calculate angular speed
-                    angularSpeed = 6*curvature * linear_speed
+                    angularSpeed = (2 * curvature) * linear_speed
 
                     # Apply angular and linear speed to the vehicle
                     post_speed(angularSpeed, linear_speed)
-                else:
-                    post_speed(0, 0)
+                #else:
+                #    post_speed(0, 0)
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
 

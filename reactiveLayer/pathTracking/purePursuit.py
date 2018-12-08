@@ -1,4 +1,5 @@
-from datetime import time
+import time
+
 from math import sqrt, atan2, pi, cos
 
 from reactiveLayer.sensing.robotMovement import get_heading, post_speed,\
@@ -10,9 +11,11 @@ class PurePursuit:
     def get_position(self):
         pass
 
+    """
     def get_carrot_point(self, path, pos, look_ahead_distance):
-        """Get the next goal point from the robot's position from a fixed look-a-head distance"""
+        Get the next goal point from the robot's position from a fixed look-a-head distance
         if path:
+ 
             for i in range(len(path)):
                 # Get the coordinate on the top of the stack
                 #p = path[len(path) - 1]
@@ -25,9 +28,32 @@ class PurePursuit:
                 h = self.pythagoras_theorem(dx, dy)
 
                 if h < look_ahead_distance:
-                    path.pop()
+                    carrot_point= path.pop()
+                    print("Popped val: Carrot point", carrot_point)
                 else:
                     return p
+        else:
+            print("Stack failed")
+    """
+    def get_carrot_point(self, path, pos, look_ahead_distance):
+        """Get the next goal point from the robot's position from a fixed look-a-head distance"""
+        if path:
+            #print("Path", path)
+            #p = path[len(path) - 1]
+            #print("Are you here", p, path[0], path[len(path) - 1])
+            #p = path[0]
+            p = path[len(path)-1]
+            dx = p[0] - pos[0]
+            dy = p[1] - pos[1]
+
+            # Calculate the distance
+            h = self.pythagoras_theorem(dx, dy)
+
+            if h < look_ahead_distance:
+                carrot_point= path.pop()
+                print("Popped val: Carrot point", carrot_point)
+            else:
+                return p
         else:
             print("Stack failed")
 
@@ -73,5 +99,35 @@ class PurePursuit:
         # Calculate the curvature
         curvature = -(2 * deltaX) / (h ** 2)
         return curvature
+
+    """ Orientates the vehicle thowards the first coordinata in the given path """
+
+    def init_orientation(self,path, look_ahead_distance, current_position):
+
+        # Find the point on the path closest to the vehicle
+        post_speed(0, 0)
+        #print('Current', current_position)
+        #print('Look ahead', look_ahead_distance)
+        carrot_point = self.get_carrot_point(path, current_position, look_ahead_distance)
+
+        # Calculate distance to the goal point from the robot
+        dx = carrot_point[0] - current_position[0]
+        dy = carrot_point[1] - current_position[1]
+
+        # Initialize values
+        orientation_angle = self.get_orientation()
+        look_ahead_angle = self.robot_look_ahead(dx, dy)
+
+        angle_diff = look_ahead_angle - orientation_angle
+
+        post_speed(-1, 0)
+
+        while ((angle_diff > 1) or (angle_diff < -1)):
+            # Update values
+            orientation_angle = self.get_orientation()
+            look_ahead_angle = self.robot_look_ahead(dx, dy)
+            angle_diff = look_ahead_angle - orientation_angle
+
+        return
 
 

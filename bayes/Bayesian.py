@@ -40,7 +40,7 @@ class Bayesian:
             # Update probability for a cell to be occupied
             prob_grid_x = int(bresenham_line[i][0])
             prob_grid_y = int(bresenham_line[i][1])
-            if prob_grid_x < max_rows and prob_grid_y < max_cols and prob_grid_x > 0 and prob_grid_y > 0:
+            if prob_grid_x < max_rows and prob_grid_y < max_cols and prob_grid_x >= 0 and prob_grid_y >= 0:
                 prob_grid = (prob_grid_x, prob_grid_y)
                 # Calculate probability for a cell to be occupied
                 p_occupied = self.bayes_rule(sensor, prob_grid)

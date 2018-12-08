@@ -26,7 +26,7 @@ class Cspace:
         self.x_max = x_max
         self.y_max = y_max
 
-        # CSAPCE width
+        # c_space width
         self.c_space_width = x_max - x_min
         self.c_space_height = y_max - y_min
 
@@ -36,20 +36,25 @@ class Cspace:
 
         # Create probability grid
         self.occupancy_grid = np.ones(shape=(self.grid_nr_rows, self.grid_nr_cols)) * 0.5
+        self.expanded_occupancy_grid = self.occupancy_grid
 
     def is_within_grid(self, x, y):
         return 0 <= x < self.grid_nr_rows and 0 <= y < self.grid_nr_cols
 
-    def neighbour(self, coords):
-        row = coords[0]
-        col = coords[1]
+    def neighbour(self, coordinate):
+        row = coordinate[0]
+        col = coordinate[1]
         neighbours = []
 
-        for i in range(-1,2):
-            for j in range(-1,2):
+        for i in range(-1, 2):
+            for j in range(-1, 2):
                 neighbour = (row + i, col + j)
 
+
                 if i == 0 and j == 0:
+                    continue
+
+                if self.is_within_grid(row + i, col + j):
                     continue
 
                 neighbours.append(neighbour)
@@ -60,3 +65,73 @@ class Cspace:
 
     def get_grid_nr_cols(self):
         return self.grid_nr_cols
+
+    def calculate_expanded_occupancy_grid(self):
+        self.expanded_occupancy_grid = self.occupancy_grid
+        for i in range(0, self.grid_nr_rows,2):
+            for j in range(0, self.grid_nr_cols,2):
+                if self.occupancy_grid[i][j] >0.8:
+                    self.expanded_occupancy_grid[i][j] = 1
+                    if self.is_within_grid(i-1,j-1):
+                        self.expanded_occupancy_grid[i - 1][j - 1] = 1
+                    if self.is_within_grid(i - 1, j):
+                        self.expanded_occupancy_grid[i - 1][  j  ] = 1
+                    if self.is_within_grid(i - 1, j + 1):
+                        self.expanded_occupancy_grid[i - 1][j + 1] = 1
+                    if self.is_within_grid(i, j - 1):
+                        self.expanded_occupancy_grid[  i  ][j - 1] = 1
+                    if self.is_within_grid(i, j + 1):
+                        self.expanded_occupancy_grid[  i  ][j + 1] = 1
+                    if self.is_within_grid(i + 1, j - 1):
+                        self.expanded_occupancy_grid[i + 1][j - 1] = 1
+                    if self.is_within_grid(i + 1, j):
+                        self.expanded_occupancy_grid[i + 1][  j  ] = 1
+                    if self.is_within_grid(i + 1, j + 1):
+                        self.expanded_occupancy_grid[i + 1][j + 1] = 1
+
+        """
+        for i in range(0, self.grid_nr_rows,2):
+            for j in range(0, self.grid_nr_cols,2):
+                if(self.expanded_occupancy_grid[i][j] >0.8):
+                    self.expanded_occupancy_grid[i][j] = 1
+                    if self.is_within_grid(i-1,j-1):
+                        self.expanded_occupancy_grid[i - 1][j - 1] = 1
+                    if self.is_within_grid(i - 1, j):
+                        self.expanded_occupancy_grid[i - 1][  j  ] = 1
+                    if self.is_within_grid(i - 1, j + 1):
+                        self.expanded_occupancy_grid[i - 1][j + 1] = 1
+                    if self.is_within_grid(i, j - 1):
+                        self.expanded_occupancy_grid[  i  ][j - 1] = 1
+                    if self.is_within_grid(i, j + 1):
+                        self.expanded_occupancy_grid[  i  ][j + 1] = 1
+                    if self.is_within_grid(i + 1, j - 1):
+                        self.expanded_occupancy_grid[i + 1][j - 1] = 1
+                    if self.is_within_grid(i + 1, j):
+                        self.expanded_occupancy_grid[i + 1][  j  ] = 1
+                    if self.is_within_grid(i + 1, j + 1):
+                        self.expanded_occupancy_grid[i + 1][j + 1] = 1
+
+        for i in range(0, self.grid_nr_rows,2):
+            for j in range(0, self.grid_nr_cols,2):
+                if(self.expanded_occupancy_grid[i][j] >0.8):
+                    self.expanded_occupancy_grid[i][j] = 1
+                    if self.is_within_grid(i-1,j-1):
+                        self.expanded_occupancy_grid[i - 1][j - 1] = 1
+                    if self.is_within_grid(i - 1, j):
+                        self.expanded_occupancy_grid[i - 1][  j  ] = 1
+                    if self.is_within_grid(i - 1, j + 1):
+                        self.expanded_occupancy_grid[i - 1][j + 1] = 1
+                    if self.is_within_grid(i, j - 1):
+                        self.expanded_occupancy_grid[  i  ][j - 1] = 1
+                    if self.is_within_grid(i, j + 1):
+                        self.expanded_occupancy_grid[  i  ][j + 1] = 1
+                    if self.is_within_grid(i + 1, j - 1):
+                        self.expanded_occupancy_grid[i + 1][j - 1] = 1
+                    if self.is_within_grid(i + 1, j):
+                        self.expanded_occupancy_grid[i + 1][  j  ] = 1
+                    if self.is_within_grid(i + 1, j + 1):
+                        self.expanded_occupancy_grid[i + 1][j + 1] = 1
+        """
+
+        return self.expanded_occupancy_grid
+

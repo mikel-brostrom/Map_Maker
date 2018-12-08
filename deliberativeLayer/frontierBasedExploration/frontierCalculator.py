@@ -4,7 +4,7 @@ from collections import deque
 import math
 
 # Minimum number of coordinates in a frontier in order to consider it as a possible frontier
-MIN_NUM_FRONTIER_POINTS = 20
+MIN_NUM_FRONTIER_POINTS = 40
 # Maximum value for considering a grid coordinate open
 OPEN_THRESHOLD = 0.4
 

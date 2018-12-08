@@ -35,8 +35,11 @@ class ShowMap(object):
         data = np.ones(shape=self.__size)
         self.__image = Image.fromarray(data * 0.5 * 255)
 
+        fig_size = [8, 8]
+
         # remove the toolbar from plot
         plt.rcParams['toolbar'] = 'None'
+        plt.rcParams["figure.figsize"] = fig_size
 
         # using matplotlib to show an image in a subplot
         self.__fig, self.__ax = plt.subplots(1, 1)
