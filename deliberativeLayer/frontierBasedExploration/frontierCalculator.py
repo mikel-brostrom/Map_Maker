@@ -3,8 +3,8 @@ from collections import deque
 
 import math
 
-# Minimum number of coordinates in a frontier in order to consider it as a possible frontier
-MIN_NUM_FRONTIER_POINTS = 40
+
+
 # Maximum value for considering a grid coordinate open
 OPEN_THRESHOLD = 0.4
 
@@ -13,6 +13,10 @@ class Frontier_calculator:
     """
     This class calculates the frontier out of a probability gris
     """
+    def __init__(self, min_num_frontier_points):
+        # Minimum number of coordinates in a frontier in order to consider it as a possible frontier
+        self.min_num_frontier_points = min_num_frontier_points
+
 
     def find_frontiers(self, c_space, robot_coord):
         """
@@ -73,7 +77,7 @@ class Frontier_calculator:
 
                     frontier_close_list.append(q)
 
-                if len(new_frontier) > MIN_NUM_FRONTIER_POINTS:
+                if len(new_frontier) > self.min_num_frontier_points:
                     frontiers.append(new_frontier)
                     frontier_close_list.append(new_frontier)
 
@@ -217,3 +221,14 @@ class Frontier_calculator:
             sum_y = 0
 
         return frontier_centroid_list
+
+    def change_frontier_attr(self):
+        #Could have input: min_num_frontier_points
+        #self.min_num_frontier_points = min_num_frontier_points
+        if self.min_num_frontier_points <= 1:
+            self.min_num_frontier_points = 1
+            return
+
+        self.min_num_frontier_points = self.min_num_frontier_points/2
+        print("No frontiers found, setting new frontier attr:", self.min_num_frontier_points)
+

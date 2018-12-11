@@ -50,7 +50,6 @@ class Cspace:
             for j in range(-1, 2):
                 neighbour = (row + i, col + j)
 
-
                 if i == 0 and j == 0:
                     continue
 
@@ -134,4 +133,12 @@ class Cspace:
         """
 
         return self.expanded_occupancy_grid
+
+    def print_cspace(self):
+
+        for row in range(0, self.occupancy_grid.shape[0]):
+            for col in range(0, self.occupancy_grid.shape[1]):
+                print("{:.1f}".format((self.occupancy_grid[row][col])), end=' ')
+
+            print()
 

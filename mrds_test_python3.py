@@ -13,7 +13,6 @@ Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with
     without getting a socket error. Added a function for converting (x,y) to (row,col))
 """
 import sched
-
 from multiprocessing import Pool
 from bayes.Bayesian import Bayesian
 from deliberativeLayer.cartographer.map_info import Cspace
@@ -23,6 +22,7 @@ from deliberativeLayer.frontierBasedExploration.aStar import *
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
 from reactiveLayer.pathTracking.purePursuit import *
+from reactiveLayer.pathTracking.unexpected_obstacle_avoidance import *
 import time
 
 url = 'http://localhost:50000'
@@ -39,28 +39,27 @@ def calculate_distance(x1,y1,x2,y2):
     return (abs(x1-x2)**2+abs(y1-y2)**2)**0.5
 
 
-
 if __name__ == '__main__':
 
     showGUI = True  # set this to False if you run in putty
 
     # Max grid value
     maxVal = 15
-    cell_size = 1
+    cell_size = 0.1
     path = []
     path_follower = PurePursuit()
 
     print('Sending commands to MRDS server', MRDS_URL)
 
-    c_space = Cspace(-30, -20, 40, 50, cell_size)
-    bayes_map = Bayesian(c_space.occupancy_grid)
-    map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_cols, showGUI)
+    c_space = Cspace(-10, -10, 10, 10, cell_size)
+    bayes_map = Bayesian(c_space.occupancy_grid, cell_size)
+    map = ShowMap(c_space.grid_nr_rows, c_space.grid_nr_cols, showGUI, cell_size)
     robot_sensing = robotSensing()
-    frontier_calculator = Frontier_calculator()
+    frontier_calculator = Frontier_calculator(40)
     path_planner = PathPlanner()
     pure_pursuit = PurePursuit()
-    linear_speed = 1
-    look_ahead_distance = 2
+    linear_speed = 0.2
+    look_ahead_distance = 0.4/cell_size
     #pool = Pool(1)
 
     try:
@@ -68,7 +67,6 @@ if __name__ == '__main__':
         response = post_speed(0, 0)
 
         while(1):
-            #print('in while!')
 
             # Get all the laser readout values starting from
             # the one with angle 0 to 270 (in meters)
@@ -84,14 +82,14 @@ if __name__ == '__main__':
             robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
             robot_row = robot_coord[0]
             robot_col = robot_coord[1]
-            #print('Im at coordinate', robot_coord) # These are floats! Not integers!
 
             # Retrieve the angles needed to calculate
-            orientation=get_orientation()
+            orientation = get_orientation()
 
             # Calculate the coordinates laser point readings
+
             sensor_readout_coordinates = robot_sensing.get_sensor_readout_coordinates(robot_coord,
-                laser_scan_values['Echoes'], laser_angles, orientation)
+                laser_scan_values['Echoes'], laser_angles, orientation, cell_size)
 
             # Get all the Bresenham lines
             bresenham_lines = robot_sensing.get_bresenham_lines(robot_coord, sensor_readout_coordinates)
@@ -100,23 +98,44 @@ if __name__ == '__main__':
                 bayes_map.bayes_handler(bresenham_line, robot_row, robot_col, c_space.get_grid_nr_rows(),
                                         c_space.get_grid_nr_cols())
 
-            #c_space.calculate_expanded_occupancy_grid()
+            c_space.calculate_expanded_occupancy_grid()
             object_detected = 0
 
+            ##########################
+            # Path problem detection
+            ##########################
             for cell in path:
-                x, y = ( cell[0], cell[1] )
-
-                #for i in range(-1, 2):
-                #    for j in range(-1, 2):
+                x, y = (cell[0], cell[1])
 
                 if c_space.occupancy_grid[x][y] >= 0.8:
-                    print("Problem on path at: ", c_space.occupancy_grid[x][y])
+                    print("Problem with object p>0.8 on path at: ", c_space.occupancy_grid[x][y])
                     object_detected = 1
+                if math.isnan(c_space.occupancy_grid[x][y]):
+                    print("Problem with nan on path at: ", c_space.occupancy_grid[x][y])
+                    object_detected = 1
+                    c_space.occupancy_grid[x][y] = 0
 
+            if len(path) >= 1:
+                shit = [sensor_readout_coordinates[150], sensor_readout_coordinates[135], sensor_readout_coordinates[120]]
+                shit_2 = [laser_scan_values['Echoes'][150], laser_scan_values['Echoes'][135], laser_scan_values['Echoes'][120]]
+                object_detected = detect_object_front(path[len(path) - 1], shit, shit_2, cell_size)
+                pass
 
-            if len(path) <= 1 or object_detected:
-                post_speed(0, 0)
+            ##########################
+            # Calculates a new path when old one i followed or object detected
+            ##########################
+            if len(path) < 1 or object_detected:
                 frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
+
+                #If no frontiers found, decrese the minium points required until frontier detected
+                while (len(frontiers) == 0) or (frontier_calculator.min_num_frontier_points == 2):
+                    frontier_calculator.change_frontier_attr()
+                    frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
+
+                    if frontier_calculator.min_num_frontier_points == 2 and len(frontiers) == 0:
+                        print("Explored as much as possible, no more frontiers to be found for minimal val")
+                        post_speed(0.3, 0)
+                #frontier_calculator.change_frontier_attr()
 
                 f = frontiers[0]
                 print("Goal:", f)
@@ -130,18 +149,16 @@ if __name__ == '__main__':
 
                 came_from, cost_so_far = path_planner.a_star_search(start, goal, c_space)
                 path = path_planner.reconstruct_path(came_from, start, goal)
-                print('Path', path)
+
+                #Update to complete history of paths taken, only use for figures
+                #map.update_complete_path(path)
 
                 robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
 
                 # Set the vehicle to point in the right direction from the beginning
-                #pure_pursuit.init_orientation(path, look_ahead_distance, robot_coord)
+                pure_pursuit.init_orientation(path, look_ahead_distance, robot_coord)
 
-            #else:
-                #post_speed(0, 0)
-                #print('All frontiers explored"')
-
-            if len(path) > 1:
+            if len(path) >= 1:
                 carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)
 
                 if carrot_coordinate:
@@ -152,12 +169,10 @@ if __name__ == '__main__':
                     curvature = pure_pursuit.calculate_curvature(vcs[0], vcs[1])
 
                     # Calculate angular speed
-                    angularSpeed = (2 * curvature) * linear_speed
+                    angularSpeed = (14 * curvature) * linear_speed
 
                     # Apply angular and linear speed to the vehicle
                     post_speed(angularSpeed, linear_speed)
-                #else:
-                #    post_speed(0, 0)
 
             map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
 

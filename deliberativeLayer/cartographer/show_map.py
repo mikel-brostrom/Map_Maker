@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 from  PIL import Image
-
+import matplotlib.pyplot as plt
 from reactiveLayer.sensing.robotMovement import get_pose
 
 """
@@ -11,7 +11,7 @@ ShowMap creates a Gui for showing the progress of the created map and saves it t
 Author Peter Hohnloser
 """
 class ShowMap(object):
-    def __init__(self, gridHeight, gridWidth, showGUI):
+    def __init__(self, gridHeight, gridWidth, showGUI, cell_size):
         """
         Constructor for ShowMap
 
@@ -23,18 +23,26 @@ class ShowMap(object):
         import matplotlib
         if not showGUI:
             matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
 
+
+        self.maximum_witdh = int(gridHeight)
         self.saveMapTime = 5.0
         self.mapName = 'map.png'
         self.first = True
-        self.__robot_size = 6
+        self.__robot_size = 1/cell_size
+
         self.__size = (gridHeight, gridWidth)
+        self.path_compl_history = []
 
         # create a grayscale image
         data = np.ones(shape=self.__size)
         self.__image = Image.fromarray(data * 0.5 * 255)
 
+        #Set pyplot window size
+        #dpi = (gridHeight * cell_size) / fig_size[0]
+        #fig_size = [30 * cell_size, 30 * cell_size]
+
+        #if (fig_size[0] or fig_size[1]) > 10:
         fig_size = [8, 8]
 
         # remove the toolbar from plot
@@ -43,7 +51,8 @@ class ShowMap(object):
 
         # using matplotlib to show an image in a subplot
         self.__fig, self.__ax = plt.subplots(1, 1)
-        self.__fig.suptitle('Show Map')
+        self.move_figure(0, 0)
+        self.__fig.suptitle('Alex and Mikel Epicness')
 
         # remove the x and y tick in figure
         self.__ax.set_xticks([])
@@ -94,7 +103,7 @@ class ShowMap(object):
         self.__ax.set_yticks([])
 
         # plot the robot pose
-        self.__ax.plot((robot_col), (robot_row), 'rs', markersize=self.__robot_size)
+        self.__ax.plot(robot_col, robot_row, 'rs', markersize=self.__robot_size)
         # plot the robot heading
         self.__ax.plot((robot_col + 3 * np.sin(orientation + np.math.pi/2)), (robot_row + 3 * np.cos(orientation+ np.math.pi/2)), 'bs', markersize=self.__robot_size)
 
@@ -102,7 +111,11 @@ class ShowMap(object):
             self.__ax.plot(frontier[1], (frontier[0]), 'gs', markersize=3)
 
         for coordinates in path_to_goal:
-            self.__ax.plot(coordinates[1], (coordinates[0]), 'ys', markersize=1)
+            self.__ax.plot(coordinates[1], (coordinates[0]), 'ys', markersize=2)
+
+        # Only use for making nice figures
+        #for coordinate in self.path_compl_history:
+        #    self.__ax.plot(coordinate[1], (coordinate[0]), 'gs', markersize=1)
 
         # draw new figure
         self.__fig.canvas.draw()
@@ -116,10 +129,25 @@ class ShowMap(object):
 
     def close(self):
         """ Saves the last image before closing the application """
-        import matplotlib.pyplot as plt
         saveMap(self.__fig, self.mapName)
         plt.close()
 
+    def move_figure(self, x, y):
+        #https://stackoverflow.com/questions/7449585/
+        # how-do-you-set-the-absolute-position-of-figure-windows-with-matplotlib
+        """Move figure's upper left corner to pixel (x, y)"""
+        backend = plt.get_backend()
+        if backend == 'TkAgg':
+            self.__fig.canvas.manager.window.wm_geometry("+%d+%d" % (x, y))
+        elif backend == 'WXAgg':
+            self.__fig.canvas.manager.window.SetPosition((x, y))
+        else:
+            # This works for QT and GTK
+            # You can also use window.setGeometry
+            self.__fig.canvas.manager.window.move(x, y)
+
+    def update_complete_path(self, path_to_add):
+        self.path_compl_history.extend(path_to_add)
 
 def createmap():
     pass
@@ -146,5 +174,4 @@ def pos_to_grid(x, y, xmin, ymax, cellsize):
     col = (x - xmin) / cellsize
     row = (ymax - y) / cellsize
     return (row, col)
-
 

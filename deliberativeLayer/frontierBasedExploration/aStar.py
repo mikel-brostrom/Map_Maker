@@ -30,7 +30,7 @@ class PathPlanner:
     def cost(self, current, next, grid):
 
         #Object detected
-        if grid[next[0]][next[1]] >= 0.7:
+        if grid[next[0]][next[1]] >= 0.8:
             heuristic_const = 10
         else:
             heuristic_const = 1
@@ -52,7 +52,7 @@ class PathPlanner:
         frontier.put(start, 0)
         came_from = {}
         cost_so_far = {}
-        came_from[start] = None
+        came_from[start] = (0, 0) # None
         cost_so_far[start] = 0
 
         while not frontier.empty():
@@ -95,10 +95,6 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
-
-
-
-
 
 #####################
 # Testing for a small grid

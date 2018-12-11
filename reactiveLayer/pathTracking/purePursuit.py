@@ -38,10 +38,6 @@ class PurePursuit:
     def get_carrot_point(self, path, pos, look_ahead_distance):
         """Get the next goal point from the robot's position from a fixed look-a-head distance"""
         if path:
-            #print("Path", path)
-            #p = path[len(path) - 1]
-            #print("Are you here", p, path[0], path[len(path) - 1])
-            #p = path[0]
             p = path[len(path)-1]
             dx = p[0] - pos[0]
             dy = p[1] - pos[1]
@@ -50,8 +46,8 @@ class PurePursuit:
             h = self.pythagoras_theorem(dx, dy)
 
             if h < look_ahead_distance:
-                carrot_point= path.pop()
-                print("Popped val: Carrot point", carrot_point)
+                carrot_point = path.pop()
+                #print("Popped val: Carrot point", carrot_point)
             else:
                 return p
         else:
@@ -102,32 +98,36 @@ class PurePursuit:
 
     """ Orientates the vehicle thowards the first coordinata in the given path """
 
-    def init_orientation(self,path, look_ahead_distance, current_position):
+    def init_orientation(self, path, look_ahead_distance, current_position):
 
         # Find the point on the path closest to the vehicle
         post_speed(0, 0)
-        #print('Current', current_position)
-        #print('Look ahead', look_ahead_distance)
         carrot_point = self.get_carrot_point(path, current_position, look_ahead_distance)
 
+
+        if not carrot_point:
+            #print("No carrot")
+            return
         # Calculate distance to the goal point from the robot
         dx = carrot_point[0] - current_position[0]
         dy = carrot_point[1] - current_position[1]
 
         # Initialize values
-        orientation_angle = self.get_orientation()
         look_ahead_angle = self.robot_look_ahead(dx, dy)
-
+        orientation_angle = self.get_orientation()
         angle_diff = look_ahead_angle - orientation_angle
 
-        post_speed(-1, 0)
+        print("Target angle:", angle_diff, "Angle limit before driving", pi / 16)
+        while abs(angle_diff) > (pi / 16):
 
-        while ((angle_diff > 1) or (angle_diff < -1)):
-            # Update values
             orientation_angle = self.get_orientation()
-            look_ahead_angle = self.robot_look_ahead(dx, dy)
             angle_diff = look_ahead_angle - orientation_angle
 
-        return
+            if angle_diff > pi:
+                post_speed(-0.8, 0)
+            else:
+                post_speed(0.8, 0)
+
+            time.sleep(0.05)
 
 

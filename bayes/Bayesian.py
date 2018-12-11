@@ -6,14 +6,15 @@ class Bayesian:
     Calculate probabilities for occupancy grid based on prior knowledge and sensor readings.
     """
 
-    def __init__(self, prob_grid):
+    def __init__(self, prob_grid, cell_size):
         self.prob_grid = prob_grid
-        self.maximum_range = 40
+        self.maximum_range = 40/cell_size
         self.beta = 0.5  # Half lobe angle
         self.accuracy = 0.1
         self.p_max = 0.98
         self.robot_row = 0
         self.robot_col = 0
+
 
     def bayes_handler(self, bresenham_line, robot_row, robot_col, max_rows, max_cols):
         """
@@ -35,7 +36,6 @@ class Bayesian:
         # Iterate of cells (tuple) to calculate bayes probability
 
         for i in range(0, len(bresenham_line)):
-
 
             # Update probability for a cell to be occupied
             prob_grid_x = int(bresenham_line[i][0])

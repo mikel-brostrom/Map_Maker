@@ -54,7 +54,7 @@ class robotSensing:
         else:
             raise UnexpectedResponse(response)
 
-    def get_sensor_readout_coordinates(self,robot_coord, laser, laser_angles,orientation):
+    def get_sensor_readout_coordinates(self, robot_coord, laser, laser_angles, orientation, cell_size):
         """
         Requests the current laser properties from
         the MRDS server and parses it into a dict
@@ -62,9 +62,9 @@ class robotSensing:
         coord_x = [0]*len(laser)
         coord_y = [0]*len(laser)
 
-        for x in range(0,len(laser_angles)):
-            coord_x[x] = robot_coord[0]+math.cos(laser_angles[x]+math.pi/2+orientation)*laser[x]
-            coord_y[x] = robot_coord[1]+math.sin(laser_angles[x]+math.pi/2+orientation)*laser[x]
+        for x in range(0, len(laser_angles)):
+            coord_x[x] = robot_coord[0]+math.cos(laser_angles[x]+math.pi/2+orientation)*(laser[x]/cell_size)
+            coord_y[x] = robot_coord[1]+math.sin(laser_angles[x]+math.pi/2+orientation)*(laser[x]/cell_size)
 
         result = zip(coord_x, coord_y)
         # Converting iterator to set
