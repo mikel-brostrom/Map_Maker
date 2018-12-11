@@ -20,6 +20,7 @@ from deliberativeLayer.cartographer.map_info import Cspace
 from deliberativeLayer.cartographer.show_map import *
 from deliberativeLayer.frontierBasedExploration.frontierCalculator import *
 from deliberativeLayer.frontierBasedExploration.aStar import *
+from deliberativeLayer.frontierBasedExploration.mission_planner import MissionPlanner
 from reactiveLayer.pathTracking.unexpected_obstacle_avoidance import detect_object_front
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
@@ -43,6 +44,7 @@ def calculate_distance(x1,y1,x2,y2):
 
 if __name__ == '__main__':
 
+    """
     showGUI = True  # set this to False if you run in putty
 
     # Max grid value
@@ -60,16 +62,23 @@ if __name__ == '__main__':
     frontier_calculator = Frontier_calculator(40)
     path_planner = PathPlanner()
     pure_pursuit = PurePursuit()
-    linear_speed = 1
-    look_ahead_distance = 0.75/cell_size
-    #pool = Pool(1)
+    linear_speed =1
+    look_ahead_distance = 3/cell_size
+    """
+    mission_planner = MissionPlanner()
+
+    while (1):
+        mission_planner.update_occupancy_grid()
+
+        mission_planner.c_space.calculate_expanded_occupancy_grid()
+
+        #mission_planner.map.updateMap()
 
     try:
         print('Telling the robot to go straight ahead.')
         response = post_speed(0, 0)
 
         while(1):
-            #print('in while!')
 
             # Get all the laser readout values starting from
             # the one with angle 0 to 270 (in meters)
@@ -104,11 +113,11 @@ if __name__ == '__main__':
 
             c_space.calculate_expanded_occupancy_grid()
 
-            object_detected = 0
 
             ##########################
             # Path problem detection
             ##########################
+            object_detected = 0
             for cell in path:
                 x, y = (cell[0], cell[1])
 
@@ -116,19 +125,25 @@ if __name__ == '__main__':
                 #    for j in range(-1, 2):
 
                 if c_space.expanded_occupancy_grid[x][y] >= 0.7:
-                    print("Problem with object p>0.8 on path at (x,y): ", x, y)
+                    print("Problem with object p>0.8 on path at: ", c_space.occupancy_grid[x][y])
                     object_detected = 1
                 if math.isnan(c_space.expanded_occupancy_grid[x][y]):
-                    print("Problem with nan on path at:(x,y): ", x, y)
+                    print("Problem with nan on path at: ", c_space.occupancy_grid[x][y])
                     object_detected = 1
                     c_space.occupancy_grid[x][y] = 0.5
+
+            #if len(path) >= 1:
+            #    shit = [sensor_readout_coordinates[150], sensor_readout_coordinates[135], sensor_readout_coordinates[120]]
+            #    shit_2 = [laser_scan_values['Echoes'][150], laser_scan_values['Echoes'][135], laser_scan_values['Echoes'][120]]
+            #    object_detected = detect_object_front(path[len(path) - 1], shit, shit_2, cell_size)
+            #    pass
 
             ##########################
             # Calculates a new path when old one i followed or object detected
             ##########################
             if not path or object_detected:
 
-                response = post_speed(-0.1, -0.1)
+                response = post_speed(0, 0)
                 frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
 
                 #If no frontiers found, decrese the minium points required until frontier detected
@@ -138,7 +153,7 @@ if __name__ == '__main__':
 
                     if frontier_calculator.min_num_frontier_points == 2 and len(frontiers) == 0:
                         print("Explored as much as possible, no more frontiers to be found for minimal val")
-                        post_speed(0.5, 0)
+                        post_speed(0.3, 0)
                 #frontier_calculator.change_frontier_attr()
 
                 f = frontiers[0]
@@ -160,19 +175,7 @@ if __name__ == '__main__':
                 robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
 
                 # Set the vehicle to point in the right direction from the beginning
-                pure_pursuit.init_orientation(path, look_ahead_distance, robot_coord, True)
-
-            if pure_pursuit.is_correct_angle(path, look_ahead_distance, robot_coord):
-                pass
-            else:
-                map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
-                continue
-
-            if len(path) >= 1:
-                shit = [sensor_readout_coordinates[150], sensor_readout_coordinates[135], sensor_readout_coordinates[120]]
-                shit_2 = [laser_scan_values['Echoes'][150], laser_scan_values['Echoes'][135], laser_scan_values['Echoes'][120]]
-                object_detected = detect_object_front(path[len(path) - 1], shit, shit_2, cell_size)
-                pass
+                pure_pursuit.init_orientation(path, look_ahead_distance, robot_coord)
 
             if len(path) >= 1:
                 carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)

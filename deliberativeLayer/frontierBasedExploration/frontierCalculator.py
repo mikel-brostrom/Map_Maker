@@ -88,7 +88,7 @@ class Frontier_calculator:
 
             map_close_list.append(p)
 
-        return self.frontiers_to_centroid(frontiers)
+        return self.frontiers_to_centroid(frontiers, c_space)
 
     def has_open_neighbor(self, p, c_space):
         """
@@ -198,7 +198,7 @@ class Frontier_calculator:
 
         return False
 
-    def frontiers_to_centroid(self, frontiers):
+    def frontiers_to_centroid(self, frontiers, c_space):
         """
         Get the list of frontiers and calculate their centroid
 
@@ -216,7 +216,9 @@ class Frontier_calculator:
                 sum_y += y
             length = len(frontier)
             # print('<frontiers_to_centroid>', length)
-            frontier_centroid_list.append((sum_x/length, sum_y/length))
+            if c_space.occupancy_grid[math.floor(sum_x/length)][math.floor(sum_y/length)] < 0.1:
+                frontier_centroid_list.append((math.floor(sum_x/length), math.floor(sum_y/length)))
+
             sum_x = 0
             sum_y = 0
 

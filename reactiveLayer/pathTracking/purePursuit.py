@@ -1,6 +1,6 @@
 import time
 
-from math import sqrt, atan2, pi, cos
+from math import sqrt, atan2, pi, cos, degrees
 
 from reactiveLayer.sensing.robotMovement import get_heading, post_speed,\
      get_orientation, get_position
@@ -8,33 +8,11 @@ from reactiveLayer.sensing.robotMovement import get_heading, post_speed,\
 
 class PurePursuit:
 
-    def get_position(self):
-        pass
+    def __init__(self):
+        self.curr_carrot_point = 0
+        self.init = False
+        self.previous_dist_to_carrot = 0
 
-    """
-    def get_carrot_point(self, path, pos, look_ahead_distance):
-        Get the next goal point from the robot's position from a fixed look-a-head distance
-        if path:
- 
-            for i in range(len(path)):
-                # Get the coordinate on the top of the stack
-                #p = path[len(path) - 1]
-                p = path[0]
-                # Caculate the x and y distance from the actual
-                # position to the carrot point
-                dx = p[0] - pos[0]
-                dy = p[1] - pos[1]
-                # Calculate the distance
-                h = self.pythagoras_theorem(dx, dy)
-
-                if h < look_ahead_distance:
-                    carrot_point= path.pop()
-                    print("Popped val: Carrot point", carrot_point)
-                else:
-                    return p
-        else:
-            print("Stack failed")
-    """
     def get_carrot_point(self, path, pos, look_ahead_distance):
         """Get the next goal point from the robot's position from a fixed look-a-head distance"""
         if path:
@@ -46,8 +24,10 @@ class PurePursuit:
             h = self.pythagoras_theorem(dx, dy)
 
             if h < look_ahead_distance:
-                carrot_point = path.pop()
-                #print("Popped val: Carrot point", carrot_point)
+                path.pop()
+                if path:
+                    p = path[len(path) - 1]
+                    return p
             else:
                 return p
         else:
@@ -98,36 +78,56 @@ class PurePursuit:
 
     """ Orientates the vehicle thowards the first coordinata in the given path """
 
-    def init_orientation(self, path, look_ahead_distance, current_position):
+    def init_orientation(self, path, look_ahead_distance, current_position, init):
+        self.init = init
 
+        #print("Init orient")
         # Find the point on the path closest to the vehicle
         post_speed(0, 0)
-        carrot_point = self.get_carrot_point(path, current_position, look_ahead_distance)
+        self.curr_carrot_point = self.get_carrot_point(path, current_position, look_ahead_distance)
+        print(self.curr_carrot_point)
 
-
-        if not carrot_point:
+        if not self.curr_carrot_point:
             #print("No carrot")
             return
-        # Calculate distance to the goal point from the robot
-        dx = carrot_point[0] - current_position[0]
-        dy = carrot_point[1] - current_position[1]
+
+        self.is_correct_angle( path, look_ahead_distance, current_position)
+
+    def is_correct_angle(self, path, look_ahead_distance, current_position):
+
+        self.curr_carrot_point = self.get_carrot_point(path, current_position, look_ahead_distance)
+
+        if not self.curr_carrot_point:
+            #print("No carrot")
+            return
+
+        dx = self.curr_carrot_point[0] - current_position[0]
+        dy = self.curr_carrot_point[1] - current_position[1]
+        distance = self.pythagoras_theorem(dx, dy)
+
+        if distance <= 1.5:
+            print(distance)
+
+
+        #if distance > 2/0.1:
+        #    if distance > self.previous_dist_to_carrot:
+        #        self.previous_dist_to_carrot = distance
+        #    self.previous_dist_to_carrot =
+        #    print("Distance from closset path point is great, returruururururn")
 
         # Initialize values
         look_ahead_angle = self.robot_look_ahead(dx, dy)
         orientation_angle = self.get_orientation()
-        angle_diff = look_ahead_angle - orientation_angle
+        angle_diff = look_ahead_angle - orientation_angle - pi/2
 
-        print("Target angle:", angle_diff, "Angle limit before driving", pi / 16)
-        while abs(angle_diff) > (pi / 16):
+        if ( abs(angle_diff) > (pi / 3) ) and self.init is True:
 
-            orientation_angle = self.get_orientation()
-            angle_diff = look_ahead_angle - orientation_angle
-
-            if angle_diff > pi:
-                post_speed(-0.8, 0)
+            #print(angle_diff)
+            if angle_diff > 0:
+                post_speed(0.8*abs(angle_diff), 0)
             else:
-                post_speed(0.8, 0)
-
-            time.sleep(0.05)
-
+                post_speed(-0.8*abs(angle_diff), 0)
+        else:
+            self.init = False
+            return True
 

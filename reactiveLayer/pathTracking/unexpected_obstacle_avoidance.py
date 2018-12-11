@@ -11,18 +11,18 @@ def detect_object_front(point, laser, laser_2, cell_size):
     #print(laser_2)
     #print(laser_front/cell_size)
 
-    if laser_front/cell_size < 4:
+    if laser_front/cell_size < 5:
         print("Object detected in front")
-        post_speed(-0.2, -0.3)
-        time.sleep(0.1)
+        post_speed(-0.5, 0)
+        time.sleep(1)
         return 1
-    if laser_left/cell_size < 4:
+    if laser_left/cell_size < 3:
         print("Object detected in left")
-        post_speed(-0.8, -0.2)
-        time.sleep(0.1)
+        post_speed(-0.5, 0.1)
+        time.sleep(1)
         return 1
-    if laser_right/cell_size < 4:
+    if laser_right/cell_size < 3:
         print("Object detected in right")
-        post_speed(0.8, -0.2)
-        time.sleep(0.1)
+        post_speed(0.5, 0.1)
+        time.sleep(1)
         return 1

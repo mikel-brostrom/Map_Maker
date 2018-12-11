@@ -5,6 +5,25 @@ import math
 
 class PathPlanner:
 
+    ##########################
+    # Path problem detection
+    ##########################
+    def path_problem_detection(self, c_space, path):
+        for cell in path:
+            x, y = (cell[0], cell[1])
+
+            # for i in range(-1, 2):
+            #    for j in range(-1, 2):
+
+            if c_space.expanded_occupancy_grid[x][y] >= 0.7:
+                print("Problem with object p>0.8 on path at: ", c_space.occupancy_grid[x][y])
+                return True
+            if math.isnan(c_space.expanded_occupancy_grid[x][y]):
+                print("Problem with nan on path at: ", c_space.occupancy_grid[x][y])
+                c_space.occupancy_grid[x][y] = 0.5
+                return True
+
+
     def neighbour(self, cell, c_space):
         row = cell[0]
         col = cell[1]
@@ -31,7 +50,11 @@ class PathPlanner:
 
         #Object detected
         if grid[next[0]][next[1]] >= 0.8:
-            heuristic_const = 10
+            heuristic_const = 1000
+        elif grid[next[0]][next[1]] >= 0.5:
+            heuristic_const = 500
+        elif grid[next[0]][next[1]] >= 0.2:
+            heuristic_const = 100
         else:
             heuristic_const = 1
 
@@ -95,6 +118,8 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
+
+
 
 #####################
 # Testing for a small grid

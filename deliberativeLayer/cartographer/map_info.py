@@ -66,73 +66,14 @@ class Cspace:
         return self.grid_nr_cols
 
     def calculate_expanded_occupancy_grid(self):
-        self.expanded_occupancy_grid = self.occupancy_grid
-        for i in range(0, self.grid_nr_rows,2):
-            for j in range(0, self.grid_nr_cols,2):
-                if self.occupancy_grid[i][j] >0.8:
-                    self.expanded_occupancy_grid[i][j] = 1
-                    if self.is_within_grid(i-1,j-1):
-                        self.expanded_occupancy_grid[i - 1][j - 1] = 1
-                    if self.is_within_grid(i - 1, j):
-                        self.expanded_occupancy_grid[i - 1][  j  ] = 1
-                    if self.is_within_grid(i - 1, j + 1):
-                        self.expanded_occupancy_grid[i - 1][j + 1] = 1
-                    if self.is_within_grid(i, j - 1):
-                        self.expanded_occupancy_grid[  i  ][j - 1] = 1
-                    if self.is_within_grid(i, j + 1):
-                        self.expanded_occupancy_grid[  i  ][j + 1] = 1
-                    if self.is_within_grid(i + 1, j - 1):
-                        self.expanded_occupancy_grid[i + 1][j - 1] = 1
-                    if self.is_within_grid(i + 1, j):
-                        self.expanded_occupancy_grid[i + 1][  j  ] = 1
-                    if self.is_within_grid(i + 1, j + 1):
-                        self.expanded_occupancy_grid[i + 1][j + 1] = 1
-
-        """
-        for i in range(0, self.grid_nr_rows,2):
-            for j in range(0, self.grid_nr_cols,2):
-                if(self.expanded_occupancy_grid[i][j] >0.8):
-                    self.expanded_occupancy_grid[i][j] = 1
-                    if self.is_within_grid(i-1,j-1):
-                        self.expanded_occupancy_grid[i - 1][j - 1] = 1
-                    if self.is_within_grid(i - 1, j):
-                        self.expanded_occupancy_grid[i - 1][  j  ] = 1
-                    if self.is_within_grid(i - 1, j + 1):
-                        self.expanded_occupancy_grid[i - 1][j + 1] = 1
-                    if self.is_within_grid(i, j - 1):
-                        self.expanded_occupancy_grid[  i  ][j - 1] = 1
-                    if self.is_within_grid(i, j + 1):
-                        self.expanded_occupancy_grid[  i  ][j + 1] = 1
-                    if self.is_within_grid(i + 1, j - 1):
-                        self.expanded_occupancy_grid[i + 1][j - 1] = 1
-                    if self.is_within_grid(i + 1, j):
-                        self.expanded_occupancy_grid[i + 1][  j  ] = 1
-                    if self.is_within_grid(i + 1, j + 1):
-                        self.expanded_occupancy_grid[i + 1][j + 1] = 1
-
-        for i in range(0, self.grid_nr_rows,2):
-            for j in range(0, self.grid_nr_cols,2):
-                if(self.expanded_occupancy_grid[i][j] >0.8):
-                    self.expanded_occupancy_grid[i][j] = 1
-                    if self.is_within_grid(i-1,j-1):
-                        self.expanded_occupancy_grid[i - 1][j - 1] = 1
-                    if self.is_within_grid(i - 1, j):
-                        self.expanded_occupancy_grid[i - 1][  j  ] = 1
-                    if self.is_within_grid(i - 1, j + 1):
-                        self.expanded_occupancy_grid[i - 1][j + 1] = 1
-                    if self.is_within_grid(i, j - 1):
-                        self.expanded_occupancy_grid[  i  ][j - 1] = 1
-                    if self.is_within_grid(i, j + 1):
-                        self.expanded_occupancy_grid[  i  ][j + 1] = 1
-                    if self.is_within_grid(i + 1, j - 1):
-                        self.expanded_occupancy_grid[i + 1][j - 1] = 1
-                    if self.is_within_grid(i + 1, j):
-                        self.expanded_occupancy_grid[i + 1][  j  ] = 1
-                    if self.is_within_grid(i + 1, j + 1):
-                        self.expanded_occupancy_grid[i + 1][j + 1] = 1
-        """
-
-        return self.expanded_occupancy_grid
+        self.expanded_occupancy_grid = self.occupancy_grid.copy()
+        for i in range(0, self.grid_nr_rows,3):
+            for j in range(0, self.grid_nr_cols,3):
+                if self.occupancy_grid[i][j] > 0.7:
+                    for k in range(-2, 3):
+                        for l in range(-2, 3):
+                            if self.is_within_grid(i + k, j + l):
+                                self.expanded_occupancy_grid[i + k][j + l] = 1
 
     def print_cspace(self):
 
