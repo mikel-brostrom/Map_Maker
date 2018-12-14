@@ -128,7 +128,8 @@ if __name__ == '__main__':
             ##########################
             if not path or object_detected:
 
-                response = post_speed(-0.1, -0.1)
+                response = post_speed(0, 0)
+                print('Calculating new path')
                 frontiers = frontier_calculator.find_frontiers(c_space, robot_coord)
 
                 #If no frontiers found, decrese the minium points required until frontier detected
@@ -150,7 +151,7 @@ if __name__ == '__main__':
                 robot_row = math.floor(robot_coord[0])
                 robot_col = math.floor(robot_coord[1])
                 start = (robot_row, robot_col)
-
+                c_space.calculate_expanded_occupancy_grid()
                 came_from, cost_so_far = path_planner.a_star_search(start, goal, c_space)
                 path = path_planner.reconstruct_path(came_from, start, goal)
 
@@ -168,13 +169,10 @@ if __name__ == '__main__':
                 map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
                 continue
 
-            if len(path) >= 1:
-                shit = [sensor_readout_coordinates[150], sensor_readout_coordinates[135], sensor_readout_coordinates[120]]
-                shit_2 = [laser_scan_values['Echoes'][150], laser_scan_values['Echoes'][135], laser_scan_values['Echoes'][120]]
-                object_detected = detect_object_front(path[len(path) - 1], shit, shit_2, cell_size)
-                pass
+            if path:
 
-            if len(path) >= 1:
+                object_detected = detect_object_front(laser_scan_values['Echoes'], cell_size)
+
                 carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)
 
                 if carrot_coordinate:
@@ -192,7 +190,7 @@ if __name__ == '__main__':
                 #else:
                 #    post_speed(0, 0)
 
-            map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
+            map.updateMap(c_space.expanded_occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
 
 
     except UnexpectedResponse as ex:
