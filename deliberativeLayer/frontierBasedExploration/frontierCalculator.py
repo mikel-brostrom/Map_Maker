@@ -227,8 +227,8 @@ class Frontier_calculator:
     def change_frontier_attr(self):
         #Could have input: min_num_frontier_points
         #self.min_num_frontier_points = min_num_frontier_points
-        if self.min_num_frontier_points <= 1:
-            self.min_num_frontier_points = 1
+        if self.min_num_frontier_points <= 10:
+            self.min_num_frontier_points = 10
             return
 
         self.min_num_frontier_points = self.min_num_frontier_points/2

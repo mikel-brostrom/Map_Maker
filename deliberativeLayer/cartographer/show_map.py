@@ -51,7 +51,7 @@ class ShowMap(object):
 
         # using matplotlib to show an image in a subplot
         self.__fig, self.__ax = plt.subplots(1, 1)
-        self.move_figure(0, 0)
+        #self.move_figure(0, 0)
         self.__fig.suptitle('Alex and Mikel Epicness')
 
         # remove the x and y tick in figure
@@ -173,5 +173,5 @@ def pos_to_grid(x, y, xmin, ymax, cellsize):
     """
     col = (x - xmin) / cellsize
     row = (ymax - y) / cellsize
-    return (row, col)
+    return row, col
 
