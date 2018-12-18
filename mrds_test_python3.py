@@ -20,7 +20,7 @@ from deliberativeLayer.cartographer.map_info import Cspace
 from deliberativeLayer.cartographer.show_map import *
 from deliberativeLayer.frontierBasedExploration.frontierCalculator import *
 from deliberativeLayer.frontierBasedExploration.aStar import *
-from reactiveLayer.pathTracking.unexpected_obstacle_avoidance import detect_object_front
+from reactiveLayer.pathTracking.obstacle_avoidance import detect_object_front
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
 from reactiveLayer.pathTracking.purePursuit import *
@@ -135,8 +135,6 @@ if __name__ == '__main__':
             ##########################
             if not path or object_detected:
 
-            if not path or problem_on_path(path):
-
                 print("Calculating a new path")
 
                 robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
@@ -187,15 +185,6 @@ if __name__ == '__main__':
             else:
                 map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
                 continue
-
-
-            if path:
-
-                shit = [sensor_readout_coordinates[150], sensor_readout_coordinates[135],
-                        sensor_readout_coordinates[120]]
-                shit_2 = [laser_scan_values['Echoes'][150], laser_scan_values['Echoes'][135],
-                          laser_scan_values['Echoes'][120]]
-                object_detected = detect_object_front(path[len(path) - 1], shit, shit_2, cell_size)
 
             if len(path) >= 1:
                 carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)
