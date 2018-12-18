@@ -124,9 +124,8 @@ class MissionPlanner:
             robot_row = math.floor(robot_coord[0])
             robot_col = math.floor(robot_coord[1])
             start = (robot_row, robot_col)
-
-            came_from, cost_so_far = path_planner.a_star_search(start, goal, c_space)
-            path = path_planner.reconstruct_path(came_from, start, goal)
+            path = path_planner.a_star(start, goal, c_space)
+            #path = path_planner.reconstruct_path(came_from, start, goal)
 
             # Update to complete history of paths taken, only use for figures
             # map.update_complete_path(path)

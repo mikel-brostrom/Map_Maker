@@ -21,7 +21,7 @@ from deliberativeLayer.cartographer.show_map import *
 from deliberativeLayer.frontierBasedExploration.frontierCalculator import *
 from deliberativeLayer.frontierBasedExploration.aStar import *
 from deliberativeLayer.frontierBasedExploration.mission_planner import MissionPlanner
-from reactiveLayer.pathTracking.unexpected_obstacle_avoidance import detect_object_front
+from reactiveLayer.pathTracking.obstacle_avoidance import detect_object_front
 from reactiveLayer.sensing.robotMovement import *
 from reactiveLayer.sensing.robotSensing import *
 from reactiveLayer.pathTracking.purePursuit import *

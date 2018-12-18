@@ -53,7 +53,7 @@ class PathPlanner:
             heuristic_const = 1000
         elif grid[next[0]][next[1]] >= 0.5:
             heuristic_const = 500
-        elif grid[next[0]][next[1]] >= 0.2:
+        elif grid[next[0]][next[1]] >= 0.1:
             heuristic_const = 100
         else:
             heuristic_const = 1

@@ -216,7 +216,7 @@ class Frontier_calculator:
                 sum_y += y
             length = len(frontier)
             # print('<frontiers_to_centroid>', length)
-            if c_space.occupancy_grid[math.floor(sum_x/length)][math.floor(sum_y/length)] < 0.1:
+            if c_space.occupancy_grid[math.floor(sum_x/length)][math.floor(sum_y/length)] < 0.3:
                 frontier_centroid_list.append((math.floor(sum_x/length), math.floor(sum_y/length)))
 
             sum_x = 0

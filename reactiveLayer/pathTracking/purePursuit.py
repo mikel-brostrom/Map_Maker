@@ -131,3 +131,30 @@ class PurePursuit:
             self.init = False
             return True
 
+    """ Orientates the vehicle thowards the first coordinata in the given path """
+
+    def initttt_orientation(self, path, look_aeadDistance):
+
+        first_carrot_point = path[len(path) - 1]
+
+        # Determine the current location of the vehicle
+        actual_coord = get_position()
+
+        # Calculate distance to the goal point from the robot
+        dx = first_carrot_point[0] - actual_coord['X']
+        dy = first_carrot_point[1] - actual_coord['Y']
+
+        # Initialize values
+        orientation_angle = get_orientation()
+        look_ahead_angle = self.robot_look_ahead(dx, dy)
+
+        angleDiff = look_ahead_angle - orientation_angle
+
+        while ((angleDiff > 1) or (angleDiff < -1)):
+            post_speed(-1, 0)
+            # Update values
+            orientation_angle = get_orientation()
+            look_ahead_angle = self.robot_look_ahead(dx, dy)
+            angleDiff = look_ahead_angle - orientation_angle
+
+        return
