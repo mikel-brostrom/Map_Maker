@@ -193,7 +193,7 @@ class Frontier_calculator:
         if c_space.occupancy_grid[p[0]][p[1]] <= OPEN_THRESHOLD:
             # And has an adjacent unknown cell
             for x, y in adjacent_points_to_p:
-                if 0.30 <= c_space.occupancy_grid[x, y] <= 0.7:
+                if 0.30 <= c_space.expanded_occupancy_grid[x, y] <= 0.7:
                     return True
 
         return False

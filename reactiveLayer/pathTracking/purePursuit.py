@@ -12,6 +12,24 @@ class PurePursuit:
         self.curr_carrot_point = 0
         self.init = False
         self.previous_dist_to_carrot = 0
+        self.linear_speed = 1
+        self.distance = 1
+
+    def set_robot_speed(self, path, robot_coord, look_ahead_distance):
+        carrot_coordinate = self.get_carrot_point(path, robot_coord, look_ahead_distance)
+
+        if carrot_coordinate:
+            # Transform coordinates system to vehicle coordinate system
+            vcs = self.tranform_to_vcs(robot_coord, carrot_coordinate)
+
+            # Calculate the curvature of the circular arc
+            curvature = self.calculate_curvature(vcs[0], vcs[1])
+
+            # Calculate angular speed
+            angularSpeed = self.distance * curvature * self.linear_speed
+
+            # Apply angular and linear speed to the vehicle
+            post_speed(angularSpeed, self.linear_speed)
 
     def get_carrot_point(self, path, pos, look_ahead_distance):
         """Get the next goal point from the robot's position from a fixed look-a-head distance"""
@@ -158,3 +176,10 @@ class PurePursuit:
             angleDiff = look_ahead_angle - orientation_angle
 
         return
+
+    def distance_to_carrot(self, current_position):
+
+        dx = self.curr_carrot_point[0] - current_position[0]
+        dy = self.curr_carrot_point[1] - current_position[1]
+        self.distance = self.pythagoras_theorem(dx, dy)
+        return self.distance

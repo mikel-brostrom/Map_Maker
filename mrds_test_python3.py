@@ -15,6 +15,9 @@ Updated by Ola Ringdahl 2018-11-01 (fixed so that you can write the address with
 import sched
 
 from multiprocessing import Pool
+
+import sys
+
 from bayes.Bayesian import Bayesian
 from deliberativeLayer.cartographer.map_info import Cspace
 from deliberativeLayer.cartographer.show_map import *
@@ -137,6 +140,7 @@ if __name__ == '__main__':
 
                 print("Calculating a new path")
 
+                curr_pos = pose['Pose']['Position']
                 robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
 
                 # Stop the vehicle
@@ -155,7 +159,12 @@ if __name__ == '__main__':
                 #        post_speed(0.5, 0)
                 #frontier_calculator.change_frontier_attr()
 
-                f = frontiers[0]
+                if not frontiers:
+                    print("Everything explored")
+                    sys.exit()
+                else:
+                    f = frontiers[0]
+
                 #print("Goal:", f)
                 f1 = math.floor(f[0])
                 f2 = math.floor(f[1])
@@ -175,37 +184,29 @@ if __name__ == '__main__':
                 #Update to complete history of paths taken, only use for figures
                 #map.update_complete_path(path)
 
+                curr_pos = pose['Pose']['Position']
                 robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
 
                 # Set the vehicle to point in the right direction from the beginning
-                pure_pursuit.init_orientation(path, look_ahead_distance, robot_coord, True)
+                pure_pursuit.init_orientation(path, look_ahead_distance,  (curr_pos['X'], curr_pos['Y']), True)
 
-            if pure_pursuit.is_correct_angle(path, look_ahead_distance, robot_coord):
+            if pure_pursuit.is_correct_angle(path, look_ahead_distance, (curr_pos['X'], curr_pos['Y'])):
                 pass
             else:
                 map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
                 continue
 
             if len(path) >= 1:
-                carrot_coordinate = pure_pursuit.get_carrot_point(path, robot_coord, look_ahead_distance)
+                robot_coord = pos_to_grid(curr_pos['X'], curr_pos['Y'], c_space.x_min, c_space.y_max, cell_size)
 
-                if carrot_coordinate:
-                    # Transform coordinates system to vehicle coordinate system
-                    vcs = pure_pursuit.tranform_to_vcs(robot_coord, carrot_coordinate)
+                detect_object_front(laser_scan_values['Echoes'], cell_size)
 
-                    # Calculate the curvature of the circular arc
-                    curvature = pure_pursuit.calculate_curvature(vcs[0], vcs[1])
+                # Calculate and set robot angular and linear velocity
+                pure_pursuit.distance_to_carrot(robot_coord)
+                curr_pos = pose['Pose']['Position']
+                pure_pursuit.set_robot_speed(path, robot_coord, look_ahead_distance)
 
-                    # Calculate angular speed
-                    angularSpeed = curvature * linear_speed
-
-                    # Apply angular and linear speed to the vehicle
-                    post_speed(angularSpeed, linear_speed)
-                #else:
-                #    post_speed(0, 0)
-
-            map.updateMap(c_space.occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
-
+            map.updateMap(c_space.expanded_occupancy_grid, maxVal, robot_row, robot_col, orientation, frontiers, path)
 
     except UnexpectedResponse as ex:
         print('Unexpected response from server when sending speed commands:', ex)

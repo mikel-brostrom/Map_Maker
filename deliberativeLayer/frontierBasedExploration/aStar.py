@@ -28,15 +28,26 @@ class PathPlanner:
         row = cell[0]
         col = cell[1]
         neighbours = []
-        self.map = c_space.occupancy_grid
-        for i in range(-1,2):
-            for j in range(-1,2):
+
+        for i in range(-1, 2):
+            for j in range(-1, 2):
                 neighbour = (row + i, col + j)
 
+                # Ignore the cell we are in
                 if i == 0 and j == 0:
                     continue
-                if c_space.is_within_grid(neighbour[0], neighbour[1]):
+                # Check if the cell is within the allowed grid
+                if not c_space.is_within_grid(neighbour[0], neighbour[1]):
+                    continue
+                # Ignore cells with probability from unknown (0.5) and up to occupied (1.0)
+                if c_space.expanded_occupancy_grid[row + i][col + j] >= 0.5:
+                    continue
+                else:
                     neighbours.append(neighbour)
+
+        if len(neighbours) <= 1:
+            print("@aStar in neighbour: No neighbours")
+
         return neighbours
 
     def print_map(self):
@@ -100,7 +111,12 @@ class PathPlanner:
         path = []
         while current != start:
             path.append(current)
-            current = came_from[current]
+            try:
+                current = came_from[current]
+            except ValueError as e:
+                print("No path")
+                return False
+
         path.append(start)  # optional
         #path.reverse()  # optional
         return path

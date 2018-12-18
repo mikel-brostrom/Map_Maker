@@ -67,13 +67,21 @@ class Cspace:
 
     def calculate_expanded_occupancy_grid(self):
         self.expanded_occupancy_grid = self.occupancy_grid.copy()
-        for i in range(0, self.grid_nr_rows, 3):
-            for j in range(0, self.grid_nr_cols, 3):
-                if self.occupancy_grid[i][j] >= 0.3:
-                    for k in range(-2, 3):
-                        for l in range(-2, 3):
+        for i in range(0, self.grid_nr_rows, 2):
+            for j in range(0, self.grid_nr_cols, 2):
+                if self.occupancy_grid[i][j] >= 0.5:
+                    for k in range(-1, 2):
+                        for l in range(-1, 2):
                             if self.is_within_grid(i + k, j + l):
                                 self.expanded_occupancy_grid[i + k][j + l] = 1
+        for i in range(1, self.grid_nr_rows, 2):
+            for j in range(1, self.grid_nr_cols, 2):
+                if self.occupancy_grid[i][j] >= 0.5:
+                    for k in range(-1, 2):
+                        for l in range(-1, 2):
+                            if self.is_within_grid(i + k, j + l):
+                                self.expanded_occupancy_grid[i + k][j + l] = 1
+
 
     def print_cspace(self):
 
