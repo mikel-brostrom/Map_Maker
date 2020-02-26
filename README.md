@@ -20,7 +20,6 @@ architecture,allowing the robot to navigate the environment while constructing a
 
 1. Launch a simulation environment in MRDS
 2. cd to the directory where the source files are contained
-3. The program takes in five arguments
 
 ```bash
 python3 main_test.py
