@@ -18,7 +18,4 @@ architecture,allowing the robot to navigate the environment while constructing a
 
 ## Results
 
-
-![](mrds_factory.png | width=50)
-![](explored_78_perc.png | width=50)
-![](map_combined_path.png)
+![]mrds_factory.png) <!-- .element height="50%" width="50%" -->
