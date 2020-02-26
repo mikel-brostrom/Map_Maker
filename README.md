@@ -20,3 +20,5 @@ architecture,allowing the robot to navigate the environment while constructing a
 
 
 ![](mrds_factory.png)
+![](explored_78_perc.png)
+![](map_combined_path.png)
