@@ -23,16 +23,8 @@ architecture,allowing the robot to navigate the environment while constructing a
 3. The program takes in five arguments
 
 ```bash
-./mapper url x1 y1 x2 y2 
+python3 main_test.py
 ```
-
-where url specifies the address and port to the machine running MRDS.x1, y1 represents the coordinate of the lower left corner and x2, y2 of the upper right corner of the area that the robot needs to explore and map. Example:
-
-```bash
-./mapper http://localhost: 50000−30−20 40 50
-```
-
-Note that these coordinates are given in the coordinate system of thefactory environment
 
 ## Results
 
