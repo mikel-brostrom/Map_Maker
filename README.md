@@ -1,4 +1,4 @@
-# Map_Maker
+# Map Maker
 
 ## Introduction
 
