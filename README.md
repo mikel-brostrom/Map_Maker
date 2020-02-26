@@ -18,7 +18,6 @@ architecture,allowing the robot to navigate the environment while constructing a
 
 ## Results
 
-<img src="./mrds_factory.png" width="100" height="100">
-![blub](mrds_factory.png){:height="50%" width="50%"}
-![](explored_78_perc.png) <!-- .element height="5%" width="5%" -->
-![](mrds_factory.png) <!-- .element height="25%" width="25%" -->
+<img src="./mrds_factory.png" width="200" height="200">
+<img src="./explored_78_perc.png" width="200" height="200">
+<img src="./map_combined_path.png" width="200" height="200">
