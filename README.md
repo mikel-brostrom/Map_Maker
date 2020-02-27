@@ -29,6 +29,6 @@ python3 main_test.py
 
 The exploration area was limited in order to avoid small areas, this is because the resolution of the world
 was not enough to traverse it without bumping into objects; doubling the resolution resulted in deliberation times in the
-order of a minute.
+order of a minute. The chosen resolution lead to a good trade-off.
 
 <img src="./mrds_factory.png" width="250" height="250"> <img src="./map.png" width="250" height="250"> <img src="./paths.png" width="250" height="250">
